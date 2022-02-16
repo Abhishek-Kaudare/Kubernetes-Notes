@@ -1,3 +1,34 @@
+# Table of Contents
+- [Table of Contents](#table-of-contents)
+- [Basic Setup](#basic-setup)
+  - [YAML Manifests](#yaml-manifests)
+  - [Environment Setup](#environment-setup)
+- [Pods](#pods)
+  - [Creating Pods](#creating-pods)
+    - [pod-definition.yml](#pod-definitionyml)
+  - [Editing Existing Pods](#editing-existing-pods)
+- [ReplicaSet](#replicaset)
+- [Deployment](#deployment)
+- [Namespace](#namespace)
+- [ConfigMap](#configmap)
+- [Secret](#secret)
+- [securityContext](#securitycontext)
+- [serviceAccount](#serviceaccount)
+- [Resource Requirements](#resource-requirements)
+    - [resources.requests](#resourcesrequests)
+    - [resources.limits](#resourceslimits)
+- [Taints and Tolerations](#taints-and-tolerations)
+- [nodeSelector](#nodeselector)
+- [nodeAffinity](#nodeaffinity)
+- [Multi-Container Pods](#multi-container-pods)
+- [Readiness Probes](#readiness-probes)
+- [Liveness Probes](#liveness-probes)
+- [Container Logging](#container-logging)
+- [Cluster Monitoring](#cluster-monitoring)
+
+# Basic Setup
+
+
 ## YAML Manifests
 
 All k8s definition files have four required sections:

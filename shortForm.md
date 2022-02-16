@@ -3,6 +3,6 @@
 | pod | po |
 | replicaset | rs |
 | replicationcontrollers | rc |
-| namespace | space |
-| pod | pod |
+| namespace | ns |
+| configmap | cm |
 
