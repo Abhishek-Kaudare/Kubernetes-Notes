@@ -1,12 +1,15 @@
-# **Table of Contents**
 
-- [**Table of Contents**](#table-of-contents)
 - [**Docker Basics**](#docker-basics)
   - [**Basic Docker File with CMD**](#basic-docker-file-with-cmd)
   - [**Docker build**](#docker-build)
   - [**Docker Run**](#docker-run)
     - [**Overide CMD in commandline**](#overide-cmd-in-commandline)
   - [**Using ENTRYPOINT in dockerfile**](#using-entrypoint-in-dockerfile)
+- [**Config Maps**](#config-maps)
+  - [**Create Config map using Imperative Commands**](#create-config-map-using-imperative-commands)
+  - [**Key Value Pair in CLI**](#key-value-pair-in-cli)
+  - [**Key Value Pair in file**](#key-value-pair-in-file)
+  - [**Yaml File**](#yaml-file)
 - [**Kubernetes Configuration comparison with Docker**](#kubernetes-configuration-comparison-with-docker)
   - [**CMD and ENTRYPOINT**](#cmd-and-entrypoint)
     - [**Overide CMD in docker commandline**](#overide-cmd-in-docker-commandline)
@@ -15,6 +18,9 @@
   - [**Environment Variables**](#environment-variables)
     - [**Overide ENV in commandline**](#overide-env-in-commandline)
     - [**Pod Configuration**](#pod-configuration-1)
+    - [**Using Configmap**](#using-configmap)
+    - [**Using Configmap for specific key**](#using-configmap-for-specific-key)
+    - [**Using Configmap from volumes**](#using-configmap-from-volumes)
 
 
 
@@ -83,6 +89,30 @@ ENTRYPOINT ["node"]
 # CMD command can be used to mention arguments which could be override from commandline.
 CMD ["src/index.js"]
 ```
+# **Config Maps**
+## **Create Config map using Imperative Commands**
+## **Key Value Pair in CLI**
+```bash
+kubectl create configmap <Config Map Name> \
+                          --from-literal=<Name1>=<Value1> \
+                          --from-literal=<Name2>=<Value2>
+```
+## **Key Value Pair in file**
+```bash
+kubectl create configmap <Config Map Name> \
+                          --from-file <file name> 
+```
+## **Yaml File**
+```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: <Config Map Name> # app-config
+data:
+  APP_COLOR: blue
+  APP_MODE: prod
+```
+
 
 # **Kubernetes Configuration comparison with Docker**
 
@@ -140,8 +170,59 @@ spec:
       env: # for configMap and secret use envFrom
         - name: APP_COLOR  
           value: pink  # for configMap and secret use valueFrom
-      resources:
-        limits:
-          memory: "128Mi"
-          cpu: "500m"
 ```
+### **Using Configmap**
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: myapp
+  labels:
+    name: myapp
+spec:
+  containers:
+    - name: myapp
+      image: ubuntu
+      envFrom:
+      - configMapRef:   
+          name: <Config Map Name>  # app-config
+```
+
+### **Using Configmap for specific key**
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: myapp
+  labels:
+    name: myapp
+spec:
+  containers:
+    - name: myapp
+      image: ubuntu
+      env:
+      - name: <Env Name> # APP_COLOR
+          valueFrom:
+          - configMapKeyRef:   
+              name: <Config Map Name>  # app-config
+              key: <Key Name>  # APP_COLOR
+```
+
+### **Using Configmap from volumes**
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: myapp
+  labels:
+    name: myapp
+spec:
+  containers:
+    - name: myapp
+      image: ubuntu
+      volumes:
+      - name: <Volume Name> 
+        configMap:   
+          name: <Config Map Name>
+```
+
