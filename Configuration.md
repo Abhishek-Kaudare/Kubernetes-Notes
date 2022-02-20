@@ -1,134 +1,42 @@
 
-- [**Docker Basics**](#docker-basics)
-  - [**Basic Docker File with CMD**](#basic-docker-file-with-cmd)
-  - [**Docker build**](#docker-build)
-  - [**Docker Run**](#docker-run)
-    - [**Overide CMD in commandline**](#overide-cmd-in-commandline)
-  - [**Using ENTRYPOINT in dockerfile**](#using-entrypoint-in-dockerfile)
-- [**Config Maps**](#config-maps)
-  - [**Create Config map using Imperative Commands**](#create-config-map-using-imperative-commands)
-  - [**Key Value Pair in CLI**](#key-value-pair-in-cli)
-  - [**Key Value Pair in file**](#key-value-pair-in-file)
-  - [**Yaml File**](#yaml-file)
-- [**Kubernetes Configuration comparison with Docker**](#kubernetes-configuration-comparison-with-docker)
-  - [**CMD and ENTRYPOINT**](#cmd-and-entrypoint)
-    - [**Overide CMD in docker commandline**](#overide-cmd-in-docker-commandline)
-    - [**Overide CMD and ENTRYPOINT in docker commandline**](#overide-cmd-and-entrypoint-in-docker-commandline)
-    - [**Pod Configuration**](#pod-configuration)
-  - [**Environment Variables**](#environment-variables)
-    - [**Overide ENV in commandline**](#overide-env-in-commandline)
-    - [**Pod Configuration**](#pod-configuration-1)
-    - [**Using Configmap**](#using-configmap)
-    - [**Using Configmap for specific key**](#using-configmap-for-specific-key)
-    - [**Using Configmap from volumes**](#using-configmap-from-volumes)
+- [**Overide CMD and ENTRYPOINT in Pod Declaration**](#overide-cmd-and-entrypoint-in-pod-declaration)
+- [**Environment Variables**](#environment-variables)
+  - [**Overide ENV in commandline**](#overide-env-in-commandline)
+  - [**Pod Configuration**](#pod-configuration)
+  - [**Config Maps**](#config-maps)
+    - [**Create Config map using Imperative Commands**](#create-config-map-using-imperative-commands)
+      - [**Key Value Pair in CLI**](#key-value-pair-in-cli)
+      - [**Key Value Pair in file**](#key-value-pair-in-file)
+    - [**Yaml File**](#yaml-file)
+    - [**Using Configmaps in Pods**](#using-configmaps-in-pods)
+      - [**Using Configmap**](#using-configmap)
+      - [**Using Configmap for specific key**](#using-configmap-for-specific-key)
+      - [**Using Configmap from volumes**](#using-configmap-from-volumes)
+- [**Secrets**](#secrets)
+  - [**Create Secret using Imperative Commands**](#create-secret-using-imperative-commands)
+    - [**Key Value Pair in CLI**](#key-value-pair-in-cli-1)
+    - [**Key Value Pair in file**](#key-value-pair-in-file-1)
+  - [**Create Secret using Declarative File**](#create-secret-using-declarative-file)
+    - [**Encode text in linux**](#encode-text-in-linux)
+    - [**Decode text in linux**](#decode-text-in-linux)
+  - [**Using Secrets in Pods**](#using-secrets-in-pods)
+    - [**Using Secret**](#using-secret)
+    - [**Using Secret for specific key**](#using-secret-for-specific-key)
+    - [**Using Secret from volumes**](#using-secret-from-volumes)
+  - [**Notes**](#notes)
+  - [**Other Commands**](#other-commands)
+    - [**Get Secrets**](#get-secrets)
+    - [**Describe Secrets**](#describe-secrets)
+    - [**Describe Secrets with values**](#describe-secrets-with-values)
 
 
 
-# **Docker Basics**
-
-## **Basic Docker File with CMD**
-```dockerfile
-# FROM defines the base image used to start the build process.
-FROM node:12-alpine 
-# RUN is the central executing directive for Dockerfiles.
-RUN apk add --no-cache python2 g++ make
-# The WORKDIR command is used to define the working directory of a Docker container at any given time. 
-WORKDIR /app
-# Copy files
-COPY . .
-# ENV sets environment variables.
-ENV foo /bar
-RUN yarn install --production
-# CMD can be used for executing a specific command within the container.
-CMD ["node", "src/index.js"]
-```
-
-
-## **Docker build**
-```bash
-docker build -t node_launch .
-
-```
-
-- This command used the Dockerfile to build a new container image. This is because we instructed the builder that we wanted to start from the `node:12-alpine` image. But, since we didn’t have that on our machine, that image needed to be downloaded.
-  - After the image was downloaded, we copied in our application and used yarn to install our application's dependencies. 
-- **The CMD directive specifies the default command to run when starting a container from this image.**
-- Finally, the `-t` flag tags our image. Think of this simply as a human-readable name for the final image. Since we **named the image** `node_launch`, we can refer to that image when we run a container.
-- The `.` at the end of the docker build command tells that Docker should look for the Dockerfile in the current directory.
 
 
 
-## **Docker Run**
-Start container using the `docker run` command and specify the name of the image.
-```bash
-docker run node_launch
-```
 
-### **Overide CMD in commandline** 
-```bash
-docker run node_launch node src/index2.js
-```
+# **Overide CMD and ENTRYPOINT in Pod Declaration** 
 
-## **Using ENTRYPOINT in dockerfile**
-
-**ENTRYPOINT** sets a default application to be used every time a container is created with the image.
-
-**CMD** command can be used to mention arguments which could be override from commandline.
-
-```dockerfile
-FROM node:12-alpine 
-RUN apk add --no-cache python2 g++ make
-WORKDIR /app
-COPY . .
-ENV APP_COLOR blue
-RUN yarn install --production
-
-# ENTRYPOINT sets a default application to be used every time a container is created with the image.
-ENTRYPOINT ["node"]
-
-# CMD command can be used to mention arguments which could be override from commandline.
-CMD ["src/index.js"]
-```
-# **Config Maps**
-## **Create Config map using Imperative Commands**
-## **Key Value Pair in CLI**
-```bash
-kubectl create configmap <Config Map Name> \
-                          --from-literal=<Name1>=<Value1> \
-                          --from-literal=<Name2>=<Value2>
-```
-## **Key Value Pair in file**
-```bash
-kubectl create configmap <Config Map Name> \
-                          --from-file <file name> 
-```
-## **Yaml File**
-```yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: <Config Map Name> # app-config
-data:
-  APP_COLOR: blue
-  APP_MODE: prod
-```
-
-
-# **Kubernetes Configuration comparison with Docker**
-
-## **CMD and ENTRYPOINT**
-
-### **Overide CMD in docker commandline** 
-```bash
-docker run node_launch src/index2.js
-```
-
-### **Overide CMD and ENTRYPOINT in docker commandline** 
-```bash
-# Overide to get node version
-docker run --entrypoint node node_launch –version
-```
-### **Pod Configuration**
 
 ```yaml
 apiVersion: v1
@@ -150,12 +58,12 @@ spec:
 ```
 
 
-## **Environment Variables**
-### **Overide ENV in commandline** 
+# **Environment Variables**
+## **Overide ENV in commandline** 
 ```bash
 docker run node_launch -e APP_COLOR=pink
 ```
-### **Pod Configuration**
+## **Pod Configuration**
 ```yaml
 apiVersion: v1
 kind: Pod
@@ -171,7 +79,31 @@ spec:
         - name: APP_COLOR  
           value: pink  # for configMap and secret use valueFrom
 ```
-### **Using Configmap**
+## **Config Maps**
+### **Create Config map using Imperative Commands**
+#### **Key Value Pair in CLI**
+```bash
+kubectl create configmap <Config Map Name> \
+                          --from-literal <Name1>=<Value1> \
+                          --from-literal <Name2>=<Value2>
+```
+#### **Key Value Pair in file**
+```bash
+kubectl create configmap <Config Map Name> \
+                          --from-file <file name> 
+```
+### **Yaml File**
+```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: <Config Map Name> # app-config
+data:
+  APP_COLOR: blue
+  APP_MODE: prod
+```
+### **Using Configmaps in Pods**
+#### **Using Configmap**
 ```yaml
 apiVersion: v1
 kind: Pod
@@ -188,7 +120,7 @@ spec:
           name: <Config Map Name>  # app-config
 ```
 
-### **Using Configmap for specific key**
+#### **Using Configmap for specific key**
 ```yaml
 apiVersion: v1
 kind: Pod
@@ -208,7 +140,7 @@ spec:
               key: <Key Name>  # APP_COLOR
 ```
 
-### **Using Configmap from volumes**
+#### **Using Configmap from volumes**
 ```yaml
 apiVersion: v1
 kind: Pod
@@ -226,3 +158,145 @@ spec:
           name: <Config Map Name>
 ```
 
+# **Secrets**
+## **Create Secret using Imperative Commands**
+
+### **Key Value Pair in CLI**
+```bash
+kubectl create secret generic <Secret Name> \
+                          --from-literal <Name1>=<Value1> \
+                          --from-literal <Name2>=<Value2>
+```
+### **Key Value Pair in file**
+```bash
+kubectl create secret generic <Secret Name> \
+                          --from-file <file name> 
+```
+## **Create Secret using Declarative File**
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: <Secret Name> # app-secret
+data:
+  DB_Host: bX1zcWw= # encode(mysql)
+  DB_User: cm9vdA== # encode(root)
+  DB_Password: cGFzd3Jk= # encode(paswrd)
+```
+### **Encode text in linux**
+```bash
+echo -n '<text>' | base64
+
+# example
+echo -n 'mysql' | base64
+# Output
+bX1zcWw=
+```
+
+### **Decode text in linux**
+```bash
+echo -n '<text>' | base64 --decode
+
+# example
+echo -n 'bX1zcWw=' | base64 --decode
+# Output
+mysql
+```
+
+## **Using Secrets in Pods**
+
+### **Using Secret**
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: myapp
+  labels:
+    name: myapp
+spec:
+  containers:
+    - name: myapp
+      image: ubuntu
+      envFrom:
+      - secretMapRef:   
+          name: <Secret Name>  # app-secret
+```
+
+### **Using Secret for specific key**
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: myapp
+  labels:
+    name: myapp
+spec:
+  containers:
+    - name: myapp
+      image: ubuntu
+      env:
+      - name: <Env Name> # DB_Host
+          valueFrom:
+          - secretKeyRef:   
+              name: <Secret Name>  # app-secret
+              key: <Key Name>  # DB_Host
+```
+
+### **Using Secret from volumes**
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: myapp
+  labels:
+    name: myapp
+spec:
+  containers:
+    - name: myapp
+      image: ubuntu
+      volumes:
+      - name: <Volume Name> 
+        secret:   
+          secretName: <Secret Name>  # app-secret
+```
+
+
+## **Notes**
+Remember that secrets encode data in base64 format. Anyone with the base64 encoded secret can easily decode it. As such the secrets can be considered as not very safe.
+
+The concept of safety of the Secrets is a bit confusing in Kubernetes. The [kubernetes documentation](https://kubernetes.io/docs/concepts/configuration/secret) page and a lot of blogs out there refer to secrets as a "safer option" to store sensitive data. They are safer than storing in plain text as they reduce the risk of accidentally exposing passwords and other sensitive data. In my opinion it's not the secret itself that is safe, it is the practices around it.
+
+Secrets are not encrypted, so it is not safer in that sense. However, some best practices around using secrets make it safer. As in best practices like:
+
+- Not checking-in secret object definition files to source code repositories.
+- [Enabling Encryption at Rest](https://kubernetes.io/docs/tasks/administer-cluster/encrypt-data/) for Secrets so they are stored encrypted in ETCD.
+
+Also the way kubernetes handles secrets. Such as:
+
+- A secret is only sent to a node if a pod on that node requires it.
+- Kubelet stores the secret into a tmpfs so that the secret is not written to disk storage.
+- Once the Pod that depends on the secret is deleted, kubelet will delete its local copy of the secret data as well.
+
+Read about the [protections](https://kubernetes.io/docs/concepts/configuration/secret/#protections) and [risks](https://kubernetes.io/docs/concepts/configuration/secret/#risks) of using secrets [here](https://kubernetes.io/docs/concepts/configuration/secret/#risks)
+
+Having said that, there are other better ways of handling sensitive data like passwords in Kubernetes, such as using tools like Helm Secrets, [HashiCorp Vault](https://www.vaultproject.io/). I hope to make a lecture on these in the future.
+
+## **Other Commands**
+### **Get Secrets**
+```bash
+kubectl get secrets
+# Output
+```
+
+### **Describe Secrets**
+```bash
+kubectl describe secrets
+# Output
+```
+
+
+### **Describe Secrets with values**
+```bash
+kubectl get secret <secret name> -o yaml
+# Output
+```
