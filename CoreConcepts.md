@@ -3,6 +3,7 @@
 - [**Table of Contents**](#table-of-contents)
 - [**Core Concepts**](#core-concepts)
   - [**Pods**](#pods)
+    - [pod-definition.yml](#pod-definitionyml)
   - [**Replica Sets**](#replica-sets)
   - [**Deployments**](#deployments)
   - [**Namespaces**](#namespaces)
@@ -21,9 +22,146 @@
 # **Core Concepts**
 
 ## **Pods**
+1. Creating Pods
 
+### pod-definition.yml
+
+```yaml
+apiVersion: v1
+
+kind: Pod
+
+metadata:
+  name: myapp-pod
+  labels:
+    app: myapp
+
+spec:
+  containers:
+    - name: nginx-container
+      image: nginx
+
+    - name: backend-container
+      image: redis
+```
+
+2. Editing Existing Pods
+
+In any of the practical quizzes if you are asked to **edit an existing POD**, please note the following:
+
+- If you are given a pod definition file, edit that file and use it to create a new pod.
+
+- **If you are not given a pod definition file**, you may extract the definition to a file using the below command:
+  
+  ```shell
+  kubectl get pod <pod-name> -o yaml > pod-definition.yaml
+  ```
+  
+  Then edit the file to make the necessary changes, delete and re-create the pod.
+
+- Use the `kubectl edit pod <pod-name>` command to edit pod properties.
+
+3. Create just a pod via imperative command with label:
+
+```shell
+$ kc run --generator=run-pod/v1 nginx --image=nginx -l tier=frontend
+```
+
+4. Create pod manifest for nginx:
+
+```shell
+$ kc run nginx --image=nginx --dry-run -o yaml
+```
+
+5. Get pod info:
+
+```shell
+$ kc describe pod nginx-pod
+```
+
+6. Get more details of pods:
+
+```shell
+$ kc get pod -o wide
+```
+
+7. Update an existing pod from changed source yaml:
+
+```shell
+$ kc apply -f redis-pod.yaml
+```
+
+8. Get running pod defintion from k8s and edit/update:
+
+```shell
+$ kc get po <pod-name> -o yaml > pod-definition.yaml
+$ vim pod-definition.yaml
+$ kc apply -f pod-definition.yaml
+```
+
+9. Edit running pod definition directly:
+
+```shell
+$ kc edit po <pod-name>
+```
+
+10. Delete all pods in default namespace:
+
+```shell
+$ kc delete po --all
+```
+
+11. Shell into (if possible) a running pod:
+
+```shell
+$ kc exec -it pod-name /bin/sh (or /bin/bash, if available)
+```
 ## **Replica Sets**
+A template section under spec can define a child resource, e.g., a pod resource under replicaSet's spec.template section. Do not include apiVersion or kind in the template.
 
+A replicaset requires the selector section with matchLabels defining the pod label to replicate on. It is still required to include the pod template even if the pods already exist before creating the replicaset, as any scale-up of more or failed pods will be done from this template.
+
+1. Create a replicaset:
+
+```shell
+$ kc create -f replicaset-definition.yaml
+```
+
+2. List all replicaset:
+
+```shell
+$ kc get replicaset
+```
+
+3. Delete a replicaset: <div style="text-align: right"> <span style="color:blue"> _*Deletes all underlying pods_ </span> </div>
+
+```shell
+$ kc delete replicaset nginx-replicaset 
+```
+
+4. Scale a replicaset to a different number of pods:
+
+```shell
+$ kc scale --replicas=X rs nginx-replicaset
+```
+
+5. Edit running replicatset definition directly:
+
+```shell
+$ kc edit rs <replicaset>
+```
+
+6. Update a replicaset with the replace command via definition file:
+
+```shell
+$ kc replace -f replicaset-definition.yaml
+```
+
+7. Get definition file from kubectl:
+
+```shell
+$ kc get rs ngnix-replicaset -o yaml > nginx-replicaset.yaml
+```
 ## **Deployments**
 
 1. How many PODs exist on the system?
