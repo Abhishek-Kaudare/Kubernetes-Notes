@@ -23,11 +23,11 @@
     - [**Using Secret**](#using-secret)
     - [**Using Secret for specific key**](#using-secret-for-specific-key)
     - [**Using Secret from volumes**](#using-secret-from-volumes)
-  - [**Notes**](#notes)
   - [**Other Commands**](#other-commands)
     - [**Get Secrets**](#get-secrets)
     - [**Describe Secrets**](#describe-secrets)
     - [**Describe Secrets with values**](#describe-secrets-with-values)
+- [**Security Context**](#security-context)
 
 
 
@@ -261,25 +261,25 @@ spec:
 ```
 
 
-## **Notes**
-Remember that secrets encode data in base64 format. Anyone with the base64 encoded secret can easily decode it. As such the secrets can be considered as not very safe.
+!!! note **More on Secrets**
+    Remember that secrets encode data in base64 format. Anyone with the base64 encoded secret can easily decode it. As such the secrets can be considered as not very safe.
 
-The concept of safety of the Secrets is a bit confusing in Kubernetes. The [kubernetes documentation](https://kubernetes.io/docs/concepts/configuration/secret) page and a lot of blogs out there refer to secrets as a "safer option" to store sensitive data. They are safer than storing in plain text as they reduce the risk of accidentally exposing passwords and other sensitive data. In my opinion it's not the secret itself that is safe, it is the practices around it.
+    The concept of safety of the Secrets is a bit confusing in Kubernetes. The [kubernetes documentation](https://kubernetes.io/docs/concepts/configuration/secret) page and a lot of blogs out there refer to secrets as a "safer option" to store sensitive data. They are safer than storing in plain text as they reduce the risk of accidentally exposing passwords and other sensitive data. In my opinion it's not the secret itself that is safe, it is the practices around it.
 
-Secrets are not encrypted, so it is not safer in that sense. However, some best practices around using secrets make it safer. As in best practices like:
+    Secrets are not encrypted, so it is not safer in that sense. However, some best practices around using secrets make it safer. As in best practices like:
 
-- Not checking-in secret object definition files to source code repositories.
-- [Enabling Encryption at Rest](https://kubernetes.io/docs/tasks/administer-cluster/encrypt-data/) for Secrets so they are stored encrypted in ETCD.
+    - Not checking-in secret object definition files to source code repositories.
+    - [Enabling Encryption at Rest](https://kubernetes.io/docs/tasks/administer-cluster/encrypt-data/) for Secrets so they are stored encrypted in ETCD.
 
-Also the way kubernetes handles secrets. Such as:
+    Also the way kubernetes handles secrets. Such as:
 
-- A secret is only sent to a node if a pod on that node requires it.
-- Kubelet stores the secret into a tmpfs so that the secret is not written to disk storage.
-- Once the Pod that depends on the secret is deleted, kubelet will delete its local copy of the secret data as well.
+    - A secret is only sent to a node if a pod on that node requires it.
+    - Kubelet stores the secret into a tmpfs so that the secret is not written to disk storage.
+    - Once the Pod that depends on the secret is deleted, kubelet will delete its local copy of the secret data as well.
 
-Read about the [protections](https://kubernetes.io/docs/concepts/configuration/secret/#protections) and [risks](https://kubernetes.io/docs/concepts/configuration/secret/#risks) of using secrets [here](https://kubernetes.io/docs/concepts/configuration/secret/#risks)
+    Read about the [protections](https://kubernetes.io/docs/concepts/configuration/secret/#protections) and [risks](https://kubernetes.io/docs/concepts/configuration/secret/#risks) of using secrets [here](https://kubernetes.io/docs/concepts/configuration/secret/#risks)
 
-Having said that, there are other better ways of handling sensitive data like passwords in Kubernetes, such as using tools like Helm Secrets, [HashiCorp Vault](https://www.vaultproject.io/). I hope to make a lecture on these in the future.
+    Having said that, there are other better ways of handling sensitive data like passwords in Kubernetes, such as using tools like Helm Secrets, [HashiCorp Vault](https://www.vaultproject.io/). I hope to make a lecture on these in the future.
 
 ## **Other Commands**
 ### **Get Secrets**
@@ -300,3 +300,86 @@ kubectl describe secrets
 kubectl get secret <secret name> -o yaml
 # Output
 ```
+
+# **Security Context**
+
+When you run a `docker container you have the option to define a set of security standards` such as the id of the user used to run the container, the Linux capabilities that can be added or removed from the container etc.
+
+`These can be configured in Kubernetes as well.`
+
+As you know already in Kubernetes, _containers are encapsulated in pods._
+
+- You may choose to configure the security settings at a container level or at a pod level.
+  
+- If you configure it at a pod level, the settings will carry over to all the containers within the pod.
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: web-pod
+spec:
+  # Adds security context for the pod
+  securityContext:
+    runAsUser: 1000
+  containers:
+    - name: ubuntu
+      image: ubuntu
+      command: ["sleep", "3600"]
+      resources:
+        limits:
+          memory: "128Mi"
+          cpu: "500m"
+```
+- If you configure it at container level then it will only apply for that container.
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: web-pod
+spec:
+  containers:
+    - name: ubuntu
+      image: ubuntu
+      command: ["sleep", "3600"]
+      # Adds security context for the container
+      securityContext:
+        runAsUser: 1000
+        # Only supported at the container level NOT at the pod level
+        capabilities:
+          add: ["MAC_ADMIN"]
+      resources:
+        limits:
+          memory: "128Mi"
+          cpu: "500m"
+```
+- If you configure it at both the pod and the container, the settings on the container will override the settings on the pod.
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: web-pod
+spec:
+  # Adds security context for the pod
+  securityContext:
+    runAsUser: 1000
+  containers:
+    - name: ubuntu
+      image: ubuntu
+      command: ["sleep", "3600"]
+      # Adds security context for the container and overrides pod
+      securityContext:
+        runAsUser: 1000
+        # Only supported at the container level NOT at the pod level
+        capabilities:
+          add: ["MAC_ADMIN"]
+      resources:
+        limits:
+          memory: "128Mi"
+          cpu: "500m"
+```
+!!! danger ""
+    `Capabilities` supported at the container level NOT at the pod level.
+
+
+
