@@ -55,7 +55,7 @@ $ echo 'autocmd Filetype yaml setlocal ts=2 sts=2 sw=2 expandtab autoindent' > ~
 Open a tmux session with two panes:
 
 ```
-$ tmux
+tmux
 Ctrl+b %
 ```
 

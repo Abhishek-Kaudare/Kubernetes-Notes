@@ -379,8 +379,15 @@ spec:
           memory: "128Mi"
           cpu: "500m"
 ```
+
 !!! danger ""
     `Capabilities` supported at the container level NOT at the pod level.
 
+    
+- Get the user of pod in current namespace
+
+```bash
+kubectl exec <pod-name> -- whoami
+```
 
 
