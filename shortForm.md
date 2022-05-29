@@ -5,4 +5,5 @@
 | replicationcontrollers | rc |
 | namespace | ns |
 | configmap | cm |
+| serviceAccount| sa |
 

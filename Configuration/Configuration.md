@@ -28,6 +28,11 @@
     - [**Describe Secrets**](#describe-secrets)
     - [**Describe Secrets with values**](#describe-secrets-with-values)
 - [**Security Context**](#security-context)
+- [**Service Accounts**](#service-accounts)
+  - [**Service Account Token**](#service-account-token)
+    - [**Application on K8's Cluster**](#application-on-k8s-cluster)
+      - [**Default Service Account**](#default-service-account)
+      - [**Different Service Account**](#different-service-account)
 
 
 
@@ -390,4 +395,137 @@ spec:
 kubectl exec <pod-name> -- whoami
 ```
 
+# **Service Accounts**
+!!!
+    A service account named `Default` is automatically created.
+    Each namespace has its own default service account whenever a part is created.
 
+The concept of service accounts is linked to other security related concepts and coordinates, such as authentication authorization, role based access controls, etc..
+
+There are two types of accounts in Kubernetes, an user account and a service account. `User Accounts` are used by users and `Service Accounts` are used by machines.
+
+- Create Service Accounts
+
+```bash
+kubectl create serviceaccount <sa-name>
+```
+
+- List Service Accounts
+```bash
+kubectl get serviceaccount
+```
+
+- Describe Service Accounts
+```bash
+kubectl describe serviceaccount <sa-name>
+-----------------------------------------
+Name:                default
+Namespace:           default
+Labels:              <none>
+Annotations:         <none>
+Image pull secrets:  <none>
+Mountable secrets:   default-token-8qrrx
+Tokens:              default-token-8qrrx
+Events:              <none>
+```
+## **Service Account Token**
+When the service account is created, it also creates a token automatically, the `service account token` is what must be used by the external application while authenticating to the Kubernetes API.
+
+The token is `stored as a secret` object.
+
+When a service account is created, 
+1. It first creates the service account object.
+2. Then it generates a token for the service account.
+3. It then creates a secret object and stores that token inside the secret object.
+4. The secret object is then linked to the service account under `Tokens` key.
+
+Describe the secret named under `Tokens` in SA to get the Token value. This token can be used as **_Authentication Bearer Token_** while making request to Kubernetes Api.
+
+Example,
+```bash
+curl https://192.168.56.70:6443/api -insecure --header "Authentication Bearer <token-value>"
+```
+
+### **Application on K8's Cluster**
+
+If we can have our custom Kubernetes dashboard application or the Prometheus application deployed on the Kubernetes cluster itself.
+
+In that case, this whole process of exporting the service account token and configuring the third party application to use it can be made simple by automatically mounting the service token secret as a volume inside the pod, hosting the third party application.
+
+That way, the token to access the Kubernetes API is already placed inside the port and can be easily read by the application.
+
+#### **Default Service Account**
+    - If you go back and look at the list of service accounts, you will see that there is a default service account that exists already for every namespace in Kubernetes.
+    - The default service account and its token are automatically mounted to that pod as a volume mount.
+
+For example, we have a simple pod definition file that creates a pod using my custom Kubernetes dashboard image.
+
+We haven't specified any secrets or elements in the definition file.
+
+However, when the pod is created, if you look at the details of the pod by running the kubectl describe pod command, 
+```bash
+kubectl describe po <pod-name>
+------------------------------
+Name:         <pod-name>
+Namespace:    default
+Priority:     0
+...
+Containers:
+  web-dashboard:
+    Image:          image
+    Mounts:         /var/run/secrets/kubernetes.io/serviceaccount from default-token-k8wjl (ro)
+    ....
+```
+
+you see that if volume is automatically created from the secret named default token, which is in fact the secret containing the token for this default service account, the secret
+
+!!!
+    Token is mounted at location `/var/run/secrets/kubernetes.io/serviceaccount` inside the pod.
+
+So from inside the pod, if you run the `ls` command to list the contents of the directory, you will see the Secret Mountain as three separate files.
+
+```bash
+kubectl exec -t <pod-name> -- ls /var/run/secrets/kubernetes.io/serviceaccount
+---------------------------------------------------------------------------
+ca.crt
+namespace
+token
+```
+The one with the actual token is the file named token. If you view contents of that file, you will see the token to be used for accessing the Kubernetes API.
+
+Default service account is very much restricted. It only has permission to run basic common API queries.
+
+#### **Different Service Account**
+
+If you'd like to use a different service account, modify the definition file to include a service account field and specify the name of the new service account.
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: myapp
+spec:
+  serviceAccount: my-service-account
+  containers:
+    - name: myapp
+      image: myapp
+```
+
+- We cannot edit the service account of an existing pod. 
+- You must delete and recreate the pod. 
+- However, in case of a deployment, you will be able to edit the service account as any changes to the definition file will automatically trigger a new rollout for the deployment. 
+- So the deployment will take care of deleting and recreating new parts with the right service account.
+
+So remember, k8 automatically mounts the default service account if you haven't explicitly specified any. You may choose not to mount a service account automatically by setting the `autoMountServiceAccountToken` field to `false`.
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: myapp
+spec:
+  automountServiceAccountToken: false
+  containers:
+    - name: myapp
+      image: myapp
+```
