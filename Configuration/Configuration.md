@@ -46,6 +46,7 @@
 - [Affinity and anti-affinity](#affinity-and-anti-affinity)
   - [**Node Affinity**](#node-affinity)
     - [**Node affinity weight**](#node-affinity-weight)
+    - [**Taints & Tolerations + Node Affinity**](#taints--tolerations--node-affinity)
 
 
 
@@ -904,8 +905,9 @@ If there are two possible nodes that match the `requiredDuringSchedulingIgnoredD
 > 
 > If you want Kubernetes to successfully schedule the Pods in this example, you must have existing nodes with the `kubernetes.io/os=linux` label.
 
-!!! **Taints & Tolerations + Node Affinity**
 
-    `Node Affinity` gives us the ability to attach a certain pod with a certain set of nodes but it does not deter other pods with no affinity set to get attached to the same node. 
-    
-    In this case we can use `Taints and Tolerations` to only allow certain pods with specific labels to it.
+### **Taints & Tolerations + Node Affinity**
+
+`Node Affinity` gives us the ability to attach a certain pod with a certain set of nodes but it does not deter other pods with no affinity set to get attached to the same node. 
+
+In this case we can use `Taints and Tolerations` to only allow certain pods with specific labels to it.
