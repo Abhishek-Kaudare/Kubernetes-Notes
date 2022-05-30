@@ -8,6 +8,7 @@
 - [**A quick note on editing PODs and Deployments**](#a-quick-note-on-editing-pods-and-deployments)
   - [**Edit a POD**](#edit-a-pod)
   - [**Edit Deployments**](#edit-deployments)
+- [**Find options for commands easily in cli**](#find-options-for-commands-easily-in-cli)
 
 # **Certification Tip: Imperative Commands**
 
@@ -246,4 +247,17 @@ With Deployments you can easily edit any field/property of the POD template. Sin
 
 ```bash
 kubectl edit deployment my-deployment
+```
+
+# **Find options for commands easily in cli**
+
+
+```bash
+kubectl explain po --recursive | less
+```
+Inside less terminal press `/` and type the pattern that you want to search top to bottom
+
+```bash
+# Get the 
+kubectl explain po --recursive | grep -A<number of lines> <pattern>
 ```

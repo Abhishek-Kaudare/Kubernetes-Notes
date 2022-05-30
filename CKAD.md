@@ -43,7 +43,7 @@ All k8s definition files have four required sections:
 Setup kubectl alias:
 
 ```shell
-$ alias kc=kubectl
+$ alias k=kubectl
 ```
 
 Configure Vim for YAML files:

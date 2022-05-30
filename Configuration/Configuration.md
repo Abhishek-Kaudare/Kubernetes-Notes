@@ -33,6 +33,11 @@
     - [**Application on K8's Cluster**](#application-on-k8s-cluster)
       - [**Default Service Account**](#default-service-account)
       - [**Different Service Account**](#different-service-account)
+- [**Resource Requirements**](#resource-requirements)
+  - [**CPU**](#cpu)
+  - [**Memory**](#memory)
+- [**Taints & Tolerations**](#taints--tolerations)
+  - [**Untaint Node**](#untaint-node)
 
 
 
@@ -528,4 +533,188 @@ spec:
   containers:
     - name: myapp
       image: myapp
+```
+# **Resource Requirements**
+
+Whenever a pod is placed on a node, it consumes resources available to that node.
+
+Scheduler decides which node a pod goes to. The scheduler takes into consideration the amount of resources required by a pod and those available on the nodes.
+
+If the node has no sufficient resources, the scheduler avoids placing the part on that node, instead places the part on one where sufficient resources are available.
+
+If there is no sufficient resources available on any of the nodes, k8 holds back scheduling the pod. You will see the pod in a `pending` state. If you look at the events, you will see the reason `insufficient <Resource>`.
+
+By default the k8s assumes resurces for containers within pods to require `0.5 CPU and 256 Mi of memory`
+
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: simple-webapp-color
+  labels:
+    name: simple-webapp-color
+spec:
+  containers:
+    - name: simple-webapp-color
+      image: simple-webapp-color
+      ports:
+        - containerPort: 8080
+      resources:
+        requests:
+          memory: "500Mi"
+          cpu: 1
+```
+## **CPU**
+One count of C.P.U is equivalent to one vCPU, 
+
+    1 AWS vCPU
+    1 GCP Core
+    1 Azure Core
+    1 Hyperthread
+
+`Min value` of CPU can be `0.1 ~ 100m` and can go lower to `1m`
+
+## **Memory**
+
+Unit of measure
+
+    Kilobyte (kB) = 1,000 bytes
+
+    Megabyte (MB) = 1,000,000 bytes
+
+    Gigabyte (GB) = 1,000,000,000 bytes
+
+
+    Kibibyte (KiB) = 1,024 bytes
+
+    Mebibyte (MiB) = 1,048,576 bytes
+
+    Gibibyte (GiB) = 1,073,741,824 bytes
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: simple-webapp-color
+  labels:
+    name: simple-webapp-color
+spec:
+  containers:
+    - name: simple-webapp-color
+      image: simple-webapp-color
+      ports:
+        - containerPort: 8080
+      resources:
+        requests:
+          memory: "500Mi"
+          cpu: 1
+        limits:
+          memory: "1Gi"
+          cpu: 2
+```
+!!! Danger Above limits the K8s scheduler
+     
+    CPU - Throttle
+
+    Memory - Terminate (Will mostly have state terminated and reason OOMKilled)
+
+!!! Note Notes on default resource requirements and limits
+    In the previous lecture, I said - "When a pod is created the containers are assigned a default CPU request of .5 and memory of 256Mi". For the POD to pick up those defaults you must have first set those as default values for request and limit by creating a LimitRange in that namespace.
+
+
+    ```yaml
+    apiVersion: v1
+    kind: LimitRange
+    metadata:
+      name: mem-limit-range
+    spec:
+      limits:
+      - default:
+          memory: 512Mi
+        defaultRequest:
+          memory: 256Mi
+        type: Container
+    ```
+
+    https://kubernetes.io/docs/tasks/administer-cluster/manage-resources/memory-default-namespace/
+
+    ```yaml
+    apiVersion: v1
+    kind: LimitRange
+    metadata:
+      name: cpu-limit-range
+    spec:
+      limits:
+      - default:
+          cpu: 1
+        defaultRequest:
+          cpu: 0.5
+        type: Container
+    ```
+
+    https://kubernetes.io/docs/tasks/administer-cluster/manage-resources/cpu-default-namespace/
+
+    References:
+
+    https://kubernetes.io/docs/tasks/configure-pod-container/assign-memory-resource
+
+
+# **Taints & Tolerations**
+
+`kubectl taint nodes <node-name> key=value:taint-effect`
+taint-effect
+- NoSchedule
+- PreferNoSchedule
+- NoExecute (Existing pod which can't tolerate will be evicted i.e. terminated)
+
+```bash
+kubectl taint nodes node1 app=blue:NoSchedule
+```
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: myapp-pod
+spec:
+  containers:
+    - name: nginx-container
+      image: nginx
+      resources:
+        limits:
+          memory: "128Mi"
+          cpu: "500m"
+  # Toleration values should map to a node taint.
+  tolerations:
+    # Values must be encoded in double quotes.
+    - key: "app"
+      operator: "Equal"
+      value: "blue"
+      effect: "NoSchedule"
+```
+
+Taints and tolerations are only meant to restrict nodes from excepting certain pods. Taints and tolerations does not tell the pod to go to a particular node. Instead it tells the node to only accept pods with certain tolerations.
+
+So a pod with certain toleration may go to other node with no taint.
+
+!!! Notes on taints on kubemaster
+
+    **The Scheduler does not shedule any pods on the master node. Why is that?**
+    
+    When the Kubernetes cluster is first set up, a taint is set on the master node. Automatically that prevents any pods from being scheduled on this node.You can see this as well as modify this behavior if required.
+
+    `However a best practice is not to deploy application workloads on a master server.` 
+    
+    ```bash
+    kubectl describe node controlplane | grep Taints
+    ------------------------------------------------
+    Taints:             node-role.kubernetes.io/master:NoSchedule
+    ```
+
+## **Untaint Node**
+
+To Untaint a node just add `-` at the end without the space.
+```bash
+kubectl taint nodes <node-name> key=value:taint-effect-
 ```
