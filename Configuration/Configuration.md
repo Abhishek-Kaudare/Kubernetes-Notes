@@ -40,6 +40,7 @@
   - [**Untaint Node**](#untaint-node)
 - [**Node Selectors**](#node-selectors)
   - [**Add label to Node**](#add-label-to-node)
+  - [**Show labels of Node**](#show-labels-of-node)
   - [**Creating a pod with node selectors**](#creating-a-pod-with-node-selectors)
   - [**Limits of Node Selectors**](#limits-of-node-selectors)
 - [Affinity and anti-affinity](#affinity-and-anti-affinity)
@@ -735,6 +736,11 @@ Node selectors are just some labels that needs to be matched between node and po
 ## **Add label to Node**
 
 ```bash
+kubectl get nodes <node-name> --show-labels
+```
+## **Show labels of Node**
+
+```bash
 kubectl label nodes <node-name> <label-key>=<label-value>
 ```
 Example
@@ -898,3 +904,8 @@ If there are two possible nodes that match the `requiredDuringSchedulingIgnoredD
 > 
 > If you want Kubernetes to successfully schedule the Pods in this example, you must have existing nodes with the `kubernetes.io/os=linux` label.
 
+!!! **Taints & Tolerations + Node Affinity**
+
+    `Node Affinity` gives us the ability to attach a certain pod with a certain set of nodes but it does not deter other pods with no affinity set to get attached to the same node. 
+    
+    In this case we can use `Taints and Tolerations` to only allow certain pods with specific labels to it.
