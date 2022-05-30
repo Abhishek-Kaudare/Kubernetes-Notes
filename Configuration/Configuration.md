@@ -38,6 +38,13 @@
   - [**Memory**](#memory)
 - [**Taints & Tolerations**](#taints--tolerations)
   - [**Untaint Node**](#untaint-node)
+- [**Node Selectors**](#node-selectors)
+  - [**Add label to Node**](#add-label-to-node)
+  - [**Creating a pod with node selectors**](#creating-a-pod-with-node-selectors)
+  - [**Limits of Node Selectors**](#limits-of-node-selectors)
+- [Affinity and anti-affinity](#affinity-and-anti-affinity)
+  - [**Node Affinity**](#node-affinity)
+    - [**Node affinity weight**](#node-affinity-weight)
 
 
 
@@ -718,3 +725,176 @@ To Untaint a node just add `-` at the end without the space.
 ```bash
 kubectl taint nodes <node-name> key=value:taint-effect-
 ```
+
+# **Node Selectors**
+
+To set a pod on certain node with some characteristics we can use node selectors.
+
+Node selectors are just some labels that needs to be matched between node and pod.
+
+## **Add label to Node**
+
+```bash
+kubectl label nodes <node-name> <label-key>=<label-value>
+```
+Example
+
+```bash
+kubectl label nodes node01 size=Large
+```
+
+## **Creating a pod with node selectors**
+
+```yaml
+apiVersion: v1
+
+kind: Pod
+
+metadata:
+  name: myapp-pod
+  labels:
+    app: myapp
+
+spec:
+  containers:
+    - name: nginx-container
+      image: nginx
+
+    - name: backend-container
+      image: redis
+
+  nodeSelector:
+      size: Large
+```
+
+## **Limits of Node Selectors**
+We are just using one label so this is not enough for complex requirement, like if we want to place the node on `medium or large nodes`, or say on `all node that are not small`.
+
+# Affinity and anti-affinity
+
+`nodeSelector` is the simplest way to constrain Pods to nodes with specific labels. _Affinity and anti-affinity expands the types of constraints_ you can define. Some of the benefits of affinity and anti-affinity include:
+
+- The _affinity/anti-affinity_ language is more expressive. `nodeSelector` only selects nodes with all the specified labels. _Affinity/anti-affinity_ gives you more control over the selection logic.
+  
+- You can _indicate that a rule is soft or preferred_, so that the scheduler still schedules the Pod even if it can't find a matching node.
+  
+- You can _constrain a Pod using labels on other Pods running on the node_ (or other topological domain), instead of just node labels, which allows you to _define rules for which Pods can be co-located on a node_.
+  
+
+The affinity feature consists of two types of affinity:
+
+- `Node affinity` functions like the `nodeSelector` field but is more expressive and allows you to specify soft rules.
+- `Inter-pod affinity/anti-affinity` allows you to constrain Pods against labels on other Pods.
+  
+## **Node Affinity**
+
+Node affinity is conceptually similar to `nodeSelector`, allowing you to constrain which nodes your Pod can be scheduled on based on node labels. There are two types of node affinity:
+
+`requiredDuringSchedulingIgnoredDuringExecution`: The scheduler can't schedule the Pod unless the rule is met. This functions like `nodeSelector`, but with a more expressive syntax.
+
+`preferredDuringSchedulingIgnoredDuringExecution`: The scheduler tries to find a node that meets the rule. If a matching node is not available, the scheduler still schedules the Pod.
+
+> **Note:** 
+> 
+> In the preceding types, IgnoredDuringExecution means that if the node labels change after Kubernetes schedules the Pod, the Pod continues to run.
+
+You can specify node affinities using the `.spec.affinity.nodeAffinity` field in your Pod spec.
+
+For example, consider the following Pod spec:
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: with-node-affinity
+spec:
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+        - matchExpressions:
+          - key: kubernetes.io/os
+            operator: In
+            values:
+            - linux
+      preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 1
+        preference:
+          matchExpressions:
+          - key: another-node-label-key
+            operator: In
+            values:
+            - another-node-label-value
+  containers:
+  - name: with-node-affinity
+    image: k8s.gcr.io/pause:2.0
+```
+In this example, the following rules apply:
+
+The node *must* have a label with the key `kubernetes.io/os` and the value `linux`.
+
+The node *preferably* has a label with the key `another-node-label-key` and the value `another-node-label-value`.
+
+You can use the `operator` field to specify a logical operator for Kubernetes to use when interpreting the rules. You can use `In`, `NotIn`, `Exists`, `DoesNotExist`, `Gt` and `Lt`.
+
+`NotIn` and `DoesNotExist` allow you to define _node anti-affinity_ behavior. Alternatively, you can use node taints to repel Pods from specific nodes.
+
+> **Note:**
+>
+> If you specify both `nodeSelector` and `nodeAffinity`, *both* must be satisfied for the Pod to be scheduled onto a node.
+>
+> If you specify multiple `nodeSelectorTerms` associated with `nodeAffinity` types, then the Pod can be scheduled onto a node if one of the specified `nodeSelectorTerms` can be satisfied.
+> 
+> If you specify multiple `matchExpressions` associated with a single `nodeSelectorTerms`, then the Pod can be scheduled onto a node only if all the `matchExpressions` are satisfied.
+
+See [Assign Pods to Nodes using Node Affinity](https://kubernetes.io/docs/tasks/configure-pod-container/assign-pods-nodes-using-node-affinity/) for more information.
+
+### **Node affinity weight**
+
+You can specify a `weight` between 1 and 100 for each instance of the `preferredDuringSchedulingIgnoredDuringExecution` affinity type. When the scheduler finds nodes that meet all the other scheduling requirements of the Pod, the scheduler iterates through every preferred rule that the node satisfies and adds the value of the `weight` for that expression to a sum.
+
+The final sum is added to the score of other priority functions for the node. Nodes with the highest total score are prioritized when the scheduler makes a scheduling decision for the Pod.
+
+For example, consider the following Pod spec:
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: with-affinity-anti-affinity
+spec:
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+        - matchExpressions:
+          - key: kubernetes.io/os
+            operator: In
+            values:
+            - linux
+      preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 1
+        preference:
+          matchExpressions:
+          - key: label-1
+            operator: In
+            values:
+            - key-1
+      - weight: 50
+        preference:
+          matchExpressions:
+          - key: label-2
+            operator: In
+            values:
+            - key-2
+  containers:
+  - name: with-node-affinity
+    image: k8s.gcr.io/pause:2.0
+```
+If there are two possible nodes that match the `requiredDuringSchedulingIgnoredDuringExecution` rule, one with the `label-1:key-1` label and another with the `label-2:key-2` label, the scheduler considers the weight of each node and adds the weight to the other scores for that node, and schedules the Pod onto the node with the highest final score.
+
+
+> **Note:** 
+> 
+> If you want Kubernetes to successfully schedule the Pods in this example, you must have existing nodes with the `kubernetes.io/os=linux` label.
+
