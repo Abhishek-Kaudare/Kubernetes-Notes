@@ -6,4 +6,9 @@
 | namespace | ns |
 | configmap | cm |
 | serviceAccount| sa |
+| deployments | deploy |
+| service | svc |
+| networkPolicies | netpol |
+| persistentVolumes | pv |
+| persistentVolumeClaims | pvc |
 

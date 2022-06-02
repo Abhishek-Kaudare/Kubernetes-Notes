@@ -118,6 +118,12 @@ Get pod info:
 $ kc describe pod nginx-pod
 ```
 
+Get pod logs:
+
+```shell
+$ kc logs <pod-name>
+```
+
 Get more details of pods:
 
 ```shell
