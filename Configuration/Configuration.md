@@ -33,6 +33,7 @@
     - [**Application on K8's Cluster**](#application-on-k8s-cluster)
       - [**Default Service Account**](#default-service-account)
       - [**Different Service Account**](#different-service-account)
+    - [**Roles and Role-Bindings**](#roles-and-role-bindings)
 - [**Resource Requirements**](#resource-requirements)
   - [**CPU**](#cpu)
   - [**Memory**](#memory)
@@ -410,9 +411,9 @@ kubectl exec <pod-name> -- whoami
 ```
 
 # **Service Accounts**
-!!!
-    A service account named `Default` is automatically created.
-    Each namespace has its own default service account whenever a part is created.
+
+>    A service account named `Default` is automatically created.
+>    Each namespace has its own default service account whenever a part is created.
 
 The concept of service accounts is linked to other security related concepts and coordinates, such as authentication authorization, role based access controls, etc..
 
@@ -493,8 +494,7 @@ Containers:
 
 you see that if volume is automatically created from the secret named default token, which is in fact the secret containing the token for this default service account, the secret
 
-!!!
-    Token is mounted at location `/var/run/secrets/kubernetes.io/serviceaccount` inside the pod.
+> Token is mounted at location `/var/run/secrets/kubernetes.io/serviceaccount` inside the pod.
 
 So from inside the pod, if you run the `ls` command to list the contents of the directory, you will see the Secret Mountain as three separate files.
 
@@ -543,6 +543,16 @@ spec:
     - name: myapp
       image: myapp
 ```
+### **Roles and Role-Bindings**
+A service accounts can be attached with roles using roles-binding.
+
+Check the created roles and roles-binding:
+```
+kubectl get roles.rbac.authorization.k8s.io
+
+kubectl get rolebindings.rbac.authorization.k8s.io
+```
+
 # **Resource Requirements**
 
 Whenever a pod is placed on a node, it consumes resources available to that node.
