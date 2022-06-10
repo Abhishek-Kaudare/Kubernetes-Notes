@@ -258,6 +258,6 @@ kubectl explain po --recursive | less
 Inside less terminal press `/` and type the pattern that you want to search top to bottom
 
 ```bash
-# Get the 
+# Get the n lines from matching pattern
 kubectl explain po --recursive | grep -A<number of lines> <pattern>
 ```

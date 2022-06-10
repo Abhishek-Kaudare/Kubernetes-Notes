@@ -10,6 +10,9 @@ RUN apk add --no-cache python2 g++ make
 WORKDIR /app
 # Copy files
 COPY . .
+# The EXPOSE instruction informs Docker that the container listens on the specified network ports at runtime
+EXPOSE 80/tcp
+EXPOSE 80/udp
 # ENV sets environment variables.
 ENV foo /bar
 RUN yarn install --production
@@ -32,11 +35,21 @@ docker build -t node_launch .
 
 
 ## **Docker Run**
-Start container using the `docker run` command and specify the name of the image.
+- Start container using the `docker run` command and specify the name of the image.
 ```bash
 docker run node_launch
 ```
 
+- The `EXPOSE` instruction does not actually publish the port. It functions as a type of documentation between the person who builds the image and the person who runs the container, about which ports are intended to be published. To actually publish the port when running the container, use the `-p` flag on `docker run` to publish and map one or more ports, or the `-P` flag to publish all exposed ports and map them to high-order ports.
+
+```bash
+docker run -p 81:80/tcp -p 82:80/udp node_launch
+```
+
+- What is the base Operating System used by the image?
+```bash
+docker run node:12-alpine cat /etc/*release*
+```
 ### **Overide CMD in commandline** 
 ```bash
 docker run node_launch node src/index2.js

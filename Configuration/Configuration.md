@@ -410,6 +410,15 @@ spec:
 kubectl exec <pod-name> -- whoami
 ```
 
+Following options are available in `securityContext`:
+```yaml
+securityContext:
+  runAsUser: 1000
+  runAsGroup: 3000
+  fsGroup: 2000
+  fsGroupChangePolicy: "OnRootMismatch"
+```
+
 # **Service Accounts**
 
 >    A service account named `Default` is automatically created.
