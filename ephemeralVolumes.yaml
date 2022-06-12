@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ephemeral-vol-example
+spec:
+  selector:
+    matchLabels:
+      app: ephemeral-vol-example
+  template:
+    metadata:
+      labels:
+        app: ephemeral-vol-example
+    spec:
+      containers:
+      - name: ephemeral-vol-example
+        image: alpine:3.14
+        resources:
+          limits:
+            memory: "64Mi"
+            cpu: "125m"
+        command:
+          - "/bin/sh"
+        args:
+          - "-c"
+          - "touch /etc/logs/test123 && sleep 3600"
+        volumeMounts:
+          - name: logs
+            mountPath: /etc/logs
+      # Creates a Empty dir
+      volumes:
+        # No size limit and is using the default medium of the node
+        - name: logs
+        # memory type that will use RAM memory to store data, the max limit is the sum of memory of all containers in the pod
+        - name: cache-volume
+          emptyDir: 
+            medium: Memory
+            sizeLimit: 64Mi

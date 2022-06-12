@@ -1,4 +1,3 @@
-
 - [**Overide CMD and ENTRYPOINT in Pod Declaration**](#overide-cmd-and-entrypoint-in-pod-declaration)
 - [**Environment Variables**](#environment-variables)
   - [**Overide ENV in commandline**](#overide-env-in-commandline)
@@ -49,14 +48,7 @@
     - [**Node affinity weight**](#node-affinity-weight)
     - [**Taints & Tolerations + Node Affinity**](#taints--tolerations--node-affinity)
 
-
-
-
-
-
-
-# **Overide CMD and ENTRYPOINT in Pod Declaration** 
-
+# **Overide CMD and ENTRYPOINT in Pod Declaration**
 
 ```yaml
 apiVersion: v1
@@ -77,13 +69,16 @@ spec:
           cpu: "500m"
 ```
 
-
 # **Environment Variables**
-## **Overide ENV in commandline** 
+
+## **Overide ENV in commandline**
+
 ```bash
 docker run node_launch -e APP_COLOR=pink
 ```
+
 ## **Pod Configuration**
+
 ```yaml
 apiVersion: v1
 kind: Pod
@@ -99,20 +94,28 @@ spec:
         - name: APP_COLOR  
           value: pink  # for configMap and secret use valueFrom
 ```
+
 ## **Config Maps**
+
 ### **Create Config map using Imperative Commands**
+
 #### **Key Value Pair in CLI**
+
 ```bash
 kubectl create configmap <Config Map Name> \
                           --from-literal <Name1>=<Value1> \
                           --from-literal <Name2>=<Value2>
 ```
+
 #### **Key Value Pair in file**
+
 ```bash
 kubectl create configmap <Config Map Name> \
                           --from-file <file name> 
 ```
+
 ### **Yaml File**
+
 ```yaml
 apiVersion: v1
 kind: ConfigMap
@@ -122,8 +125,11 @@ data:
   APP_COLOR: blue
   APP_MODE: prod
 ```
+
 ### **Using Configmaps in Pods**
+
 #### **Using Configmap**
+
 ```yaml
 apiVersion: v1
 kind: Pod
@@ -141,6 +147,7 @@ spec:
 ```
 
 #### **Using Configmap for specific key**
+
 ```yaml
 apiVersion: v1
 kind: Pod
@@ -161,6 +168,7 @@ spec:
 ```
 
 #### **Using Configmap from volumes**
+
 ```yaml
 apiVersion: v1
 kind: Pod
@@ -179,20 +187,26 @@ spec:
 ```
 
 # **Secrets**
+
 ## **Create Secret using Imperative Commands**
 
 ### **Key Value Pair in CLI**
+
 ```bash
 kubectl create secret generic <Secret Name> \
                           --from-literal <Name1>=<Value1> \
                           --from-literal <Name2>=<Value2>
 ```
+
 ### **Key Value Pair in file**
+
 ```bash
 kubectl create secret generic <Secret Name> \
                           --from-file <file name> 
 ```
+
 ## **Create Secret using Declarative File**
+
 ```yaml
 apiVersion: v1
 kind: Secret
@@ -203,7 +217,9 @@ data:
   DB_User: cm9vdA== # encode(root)
   DB_Password: cGFzd3Jk= # encode(paswrd)
 ```
+
 ### **Encode text in linux**
+
 ```bash
 echo -n '<text>' | base64
 
@@ -214,6 +230,7 @@ bX1zcWw=
 ```
 
 ### **Decode text in linux**
+
 ```bash
 echo -n '<text>' | base64 --decode
 
@@ -226,6 +243,7 @@ mysql
 ## **Using Secrets in Pods**
 
 ### **Using Secret**
+
 ```yaml
 apiVersion: v1
 kind: Pod
@@ -243,6 +261,7 @@ spec:
 ```
 
 ### **Using Secret for specific key**
+
 ```yaml
 apiVersion: v1
 kind: Pod
@@ -263,6 +282,7 @@ spec:
 ```
 
 ### **Using Secret from volumes**
+
 ```yaml
 apiVersion: v1
 kind: Pod
@@ -280,43 +300,67 @@ spec:
           secretName: <Secret Name>  # app-secret
 ```
 
+> **More on Secrets**
 
-!!! note **More on Secrets**
-    
     Remember that secrets encode data in base64 format. Anyone with the base64 encoded secret can easily decode it. As such the secrets can be considered as not very safe.
-
+    
     The concept of safety of the Secrets is a bit confusing in Kubernetes. The [kubernetes documentation](https://kubernetes.io/docs/concepts/configuration/secret) page and a lot of blogs out there refer to secrets as a "safer option" to store sensitive data. They are safer than storing in plain text as they reduce the risk of accidentally exposing passwords and other sensitive data. In my opinion it's not the secret itself that is safe, it is the practices around it.
-
+    
     Secrets are not encrypted, so it is not safer in that sense. However, some best practices around using secrets make it safer. As in best practices like:
-
+    
     - Not checking-in secret object definition files to source code repositories.
     - [Enabling Encryption at Rest](https://kubernetes.io/docs/tasks/administer-cluster/encrypt-data/) for Secrets so they are stored encrypted in ETCD.
-
+    
     Also the way kubernetes handles secrets. Such as:
-
+    
     - A secret is only sent to a node if a pod on that node requires it.
     - Kubelet stores the secret into a tmpfs so that the secret is not written to disk storage.
     - Once the Pod that depends on the secret is deleted, kubelet will delete its local copy of the secret data as well.
-
+    
     Read about the [protections](https://kubernetes.io/docs/concepts/configuration/secret/#protections) and [risks](https://kubernetes.io/docs/concepts/configuration/secret/#risks) of using secrets [here](https://kubernetes.io/docs/concepts/configuration/secret/#risks)
-
+    
     Having said that, there are other better ways of handling sensitive data like passwords in Kubernetes, such as using tools like Helm Secrets, [HashiCorp Vault](https://www.vaultproject.io/). I hope to make a lecture on these in the future.
 
+> Remember that secrets encode data in base64 format. Anyone with the base64 encoded secret can easily decode it. As such the secrets can be considered as not very safe.
+> 
+> The concept of safety of the Secrets is a bit confusing in Kubernetes. The [kubernetes documentation](https://kubernetes.io/docs/concepts/configuration/secret) page and a lot of blogs out there refer to secrets as a "safer option" to store sensitive data. They are safer than storing in plain text as they reduce the risk of accidentally exposing passwords and other sensitive data. In my opinion it's not the secret itself that is safe, it is the practices around it.
+> 
+> Secrets are not encrypted, so it is not safer in that sense. However, some best practices around using secrets make it safer. As in best practices like:
+> 
+> - Not checking-in secret object definition files to source code repositories.
+> 
+> - [Enabling Encryption at Rest](https://kubernetes.io/docs/tasks/administer-cluster/encrypt-data/) for Secrets so they are stored encrypted in ETCD.
+>   
+>   Also the way kubernetes handles secrets. Such as:
+>   
+>   - A secret is only sent to a node if a pod on that node requires it.
+>   - Kubelet stores the secret into a tmpfs so that the secret is not written to disk storage.
+>   - Once the Pod that depends on the secret is deleted, kubelet will delete its local copy of the secret data as well.
+>   
+>   Read about the [protections](https://kubernetes.io/docs/concepts/configuration/secret/#protections) and [risks](https://kubernetes.io/docs/concepts/configuration/secret/#risks) of using secrets [here](https://kubernetes.io/docs/concepts/configuration/secret/#risks)
+>   
+>   Having said that, there are other better ways of handling sensitive data like passwords in Kubernetes, such as using tools like Helm Secrets, [HashiCorp Vault](https://www.vaultproject.io/). I hope to make a lecture on these in the future.
+
+
+
 ## **Other Commands**
+
 ### **Get Secrets**
+
 ```bash
 kubectl get secrets
 # Output
 ```
 
 ### **Describe Secrets**
+
 ```bash
 kubectl describe secrets
 # Output
 ```
 
-
 ### **Describe Secrets with values**
+
 ```bash
 kubectl get secret <secret name> -o yaml
 # Output
@@ -331,14 +375,15 @@ When you run a `docker container you have the option to define a set of security
 As you know already in Kubernetes, _containers are encapsulated in pods._
 
 - You may choose to configure the security settings at a container level or at a pod level.
-  
+
 - If you configure it at a pod level, the settings will carry over to all the containers within the pod.
-```yaml
-apiVersion: v1
-kind: Pod
-metadata:
+  
+  ```yaml
+  apiVersion: v1
+  kind: Pod
+  metadata:
   name: web-pod
-spec:
+  spec:
   # Adds security context for the pod
   securityContext:
     runAsUser: 1000
@@ -350,7 +395,8 @@ spec:
         limits:
           memory: "128Mi"
           cpu: "500m"
-```
+  ```
+
 - If you configure it at container level then it will only apply for that container.
 
 ```yaml
@@ -374,13 +420,15 @@ spec:
           memory: "128Mi"
           cpu: "500m"
 ```
+
 - If you configure it at both the pod and the container, the settings on the container will override the settings on the pod.
-```yaml
-apiVersion: v1
-kind: Pod
-metadata:
+  
+  ```yaml
+  apiVersion: v1
+  kind: Pod
+  metadata:
   name: web-pod
-spec:
+  spec:
   # Adds security context for the pod
   securityContext:
     runAsUser: 1000
@@ -398,12 +446,11 @@ spec:
         limits:
           memory: "128Mi"
           cpu: "500m"
-```
+  ```
 
 !!! danger ""
     `Capabilities` supported at the container level NOT at the pod level.
 
-    
 - Get the user of pod in current namespace
 
 ```bash
@@ -411,6 +458,7 @@ kubectl exec <pod-name> -- whoami
 ```
 
 Following options are available in `securityContext`:
+
 ```yaml
 securityContext:
   runAsUser: 1000
@@ -435,14 +483,19 @@ kubectl create serviceaccount <sa-name>
 ```
 
 - List Service Accounts
-```bash
-kubectl get serviceaccount
-```
+  
+  ```bash
+  kubectl get serviceaccount
+  ```
 
 - Describe Service Accounts
-```bash
-kubectl describe serviceaccount <sa-name>
+  
+  ```bash
+  kubectl describe serviceaccount <sa-name>
+  ```
+
 -----------------------------------------
+
 Name:                default
 Namespace:           default
 Labels:              <none>
@@ -451,6 +504,7 @@ Image pull secrets:  <none>
 Mountable secrets:   default-token-8qrrx
 Tokens:              default-token-8qrrx
 Events:              <none>
+
 ```
 ## **Service Account Token**
 When the service account is created, it also creates a token automatically, the `service account token` is what must be used by the external application while authenticating to the Kubernetes API.
@@ -479,6 +533,7 @@ In that case, this whole process of exporting the service account token and conf
 That way, the token to access the Kubernetes API is already placed inside the port and can be easily read by the application.
 
 #### **Default Service Account**
+
     - If you go back and look at the list of service accounts, you will see that there is a default service account that exists already for every namespace in Kubernetes.
     - The default service account and its token are automatically mounted to that pod as a volume mount.
 
@@ -487,6 +542,7 @@ For example, we have a simple pod definition file that creates a pod using my cu
 We haven't specified any secrets or elements in the definition file.
 
 However, when the pod is created, if you look at the details of the pod by running the kubectl describe pod command, 
+
 ```bash
 kubectl describe po <pod-name>
 ------------------------------
@@ -514,6 +570,7 @@ ca.crt
 namespace
 token
 ```
+
 The one with the actual token is the file named token. If you view contents of that file, you will see the token to be used for accessing the Kubernetes API.
 
 Default service account is very much restricted. It only has permission to run basic common API queries.
@@ -552,10 +609,13 @@ spec:
     - name: myapp
       image: myapp
 ```
+
 ### **Roles and Role-Bindings**
+
 A service accounts can be attached with roles using roles-binding.
 
 Check the created roles and roles-binding:
+
 ```
 kubectl get roles.rbac.authorization.k8s.io
 
@@ -573,7 +633,6 @@ If the node has no sufficient resources, the scheduler avoids placing the part o
 If there is no sufficient resources available on any of the nodes, k8 holds back scheduling the pod. You will see the pod in a `pending` state. If you look at the events, you will see the reason `insufficient <Resource>`.
 
 By default the k8s assumes resurces for containers within pods to require `0.5 CPU and 256 Mi of memory`
-
 
 ```yaml
 apiVersion: v1
@@ -593,7 +652,9 @@ spec:
           memory: "500Mi"
           cpu: 1
 ```
+
 ## **CPU**
+
 One count of C.P.U is equivalent to one vCPU, 
 
     1 AWS vCPU
@@ -608,16 +669,16 @@ One count of C.P.U is equivalent to one vCPU,
 Unit of measure
 
     Kilobyte (kB) = 1,000 bytes
-
+    
     Megabyte (MB) = 1,000,000 bytes
-
+    
     Gigabyte (GB) = 1,000,000,000 bytes
-
-
+    
+    
     Kibibyte (KiB) = 1,024 bytes
-
+    
     Mebibyte (MiB) = 1,048,576 bytes
-
+    
     Gibibyte (GiB) = 1,073,741,824 bytes
 
 ```yaml
@@ -641,15 +702,15 @@ spec:
           memory: "1Gi"
           cpu: 2
 ```
-!!! Danger Above limits the K8s scheduler
-     
-    CPU - Throttle
 
+!!! Danger Above limits the K8s scheduler
+
+    CPU - Throttle
+    
     Memory - Terminate (Will mostly have state terminated and reason OOMKilled)
 
 !!! Note Notes on default resource requirements and limits
     In the previous lecture, I said - "When a pod is created the containers are assigned a default CPU request of .5 and memory of 256Mi". For the POD to pick up those defaults you must have first set those as default values for request and limit by creating a LimitRange in that namespace.
-
 
     ```yaml
     apiVersion: v1
@@ -664,9 +725,9 @@ spec:
           memory: 256Mi
         type: Container
     ```
-
+    
     https://kubernetes.io/docs/tasks/administer-cluster/manage-resources/memory-default-namespace/
-
+    
     ```yaml
     apiVersion: v1
     kind: LimitRange
@@ -680,18 +741,18 @@ spec:
           cpu: 0.5
         type: Container
     ```
-
+    
     https://kubernetes.io/docs/tasks/administer-cluster/manage-resources/cpu-default-namespace/
-
+    
     References:
-
+    
     https://kubernetes.io/docs/tasks/configure-pod-container/assign-memory-resource
-
 
 # **Taints & Tolerations**
 
 `kubectl taint nodes <node-name> key=value:taint-effect`
 taint-effect
+
 - NoSchedule
 - PreferNoSchedule
 - NoExecute (Existing pod which can't tolerate will be evicted i.e. terminated)
@@ -731,7 +792,7 @@ So a pod with certain toleration may go to other node with no taint.
     **The Scheduler does not shedule any pods on the master node. Why is that?**
     
     When the Kubernetes cluster is first set up, a taint is set on the master node. Automatically that prevents any pods from being scheduled on this node.You can see this as well as modify this behavior if required.
-
+    
     `However a best practice is not to deploy application workloads on a master server.` 
     
     ```bash
@@ -743,6 +804,7 @@ So a pod with certain toleration may go to other node with no taint.
 ## **Untaint Node**
 
 To Untaint a node just add `-` at the end without the space.
+
 ```bash
 kubectl taint nodes <node-name> key=value:taint-effect-
 ```
@@ -758,11 +820,13 @@ Node selectors are just some labels that needs to be matched between node and po
 ```bash
 kubectl get nodes <node-name> --show-labels
 ```
+
 ## **Show labels of Node**
 
 ```bash
 kubectl label nodes <node-name> <label-key>=<label-value>
 ```
+
 Example
 
 ```bash
@@ -794,6 +858,7 @@ spec:
 ```
 
 ## **Limits of Node Selectors**
+
 We are just using one label so this is not enough for complex requirement, like if we want to place the node on `medium or large nodes`, or say on `all node that are not small`.
 
 # Affinity and anti-affinity
@@ -801,17 +866,16 @@ We are just using one label so this is not enough for complex requirement, like 
 `nodeSelector` is the simplest way to constrain Pods to nodes with specific labels. _Affinity and anti-affinity expands the types of constraints_ you can define. Some of the benefits of affinity and anti-affinity include:
 
 - The _affinity/anti-affinity_ language is more expressive. `nodeSelector` only selects nodes with all the specified labels. _Affinity/anti-affinity_ gives you more control over the selection logic.
-  
+
 - You can _indicate that a rule is soft or preferred_, so that the scheduler still schedules the Pod even if it can't find a matching node.
-  
+
 - You can _constrain a Pod using labels on other Pods running on the node_ (or other topological domain), instead of just node labels, which allows you to _define rules for which Pods can be co-located on a node_.
-  
 
 The affinity feature consists of two types of affinity:
 
 - `Node affinity` functions like the `nodeSelector` field but is more expressive and allows you to specify soft rules.
 - `Inter-pod affinity/anti-affinity` allows you to constrain Pods against labels on other Pods.
-  
+
 ## **Node Affinity**
 
 Node affinity is conceptually similar to `nodeSelector`, allowing you to constrain which nodes your Pod can be scheduled on based on node labels. There are two types of node affinity:
@@ -855,6 +919,7 @@ spec:
   - name: with-node-affinity
     image: k8s.gcr.io/pause:2.0
 ```
+
 In this example, the following rules apply:
 
 The node *must* have a label with the key `kubernetes.io/os` and the value `linux`.
@@ -866,9 +931,9 @@ You can use the `operator` field to specify a logical operator for Kubernetes to
 `NotIn` and `DoesNotExist` allow you to define _node anti-affinity_ behavior. Alternatively, you can use node taints to repel Pods from specific nodes.
 
 > **Note:**
->
+> 
 > If you specify both `nodeSelector` and `nodeAffinity`, *both* must be satisfied for the Pod to be scheduled onto a node.
->
+> 
 > If you specify multiple `nodeSelectorTerms` associated with `nodeAffinity` types, then the Pod can be scheduled onto a node if one of the specified `nodeSelectorTerms` can be satisfied.
 > 
 > If you specify multiple `matchExpressions` associated with a single `nodeSelectorTerms`, then the Pod can be scheduled onto a node only if all the `matchExpressions` are satisfied.
@@ -917,13 +982,12 @@ spec:
   - name: with-node-affinity
     image: k8s.gcr.io/pause:2.0
 ```
-If there are two possible nodes that match the `requiredDuringSchedulingIgnoredDuringExecution` rule, one with the `label-1:key-1` label and another with the `label-2:key-2` label, the scheduler considers the weight of each node and adds the weight to the other scores for that node, and schedules the Pod onto the node with the highest final score.
 
+If there are two possible nodes that match the `requiredDuringSchedulingIgnoredDuringExecution` rule, one with the `label-1:key-1` label and another with the `label-2:key-2` label, the scheduler considers the weight of each node and adds the weight to the other scores for that node, and schedules the Pod onto the node with the highest final score.
 
 > **Note:** 
 > 
 > If you want Kubernetes to successfully schedule the Pods in this example, you must have existing nodes with the `kubernetes.io/os=linux` label.
-
 
 ### **Taints & Tolerations + Node Affinity**
 
