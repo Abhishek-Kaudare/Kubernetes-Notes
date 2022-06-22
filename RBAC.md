@@ -1,5 +1,7 @@
 ### **Modify the kube-apiserver startup options to include the `basic-auth` file**
 
+The actions on a resource that a role uses in its rules are the so-called verbs, such as the following: get , list (read-only) create , update , patch , delete , deletecollection (read-write)
+
 
 ```yaml
 apiVersion: v1
@@ -61,14 +63,14 @@ kind: RoleBinding
 metadata:
   name: kube-proxy
   namespace: kube-system
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: Role
-  name: pod-reader
 subjects:
 - apiGroup: rbac.authorization.k8s.io
   kind: Group
   name: system:bootstrappers:kubeadm:default-node-token
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: pod-reader
 ```
 
 Once you create a role, you have to create a rolebinding with a user in mind so that the user can use that role to do stuff

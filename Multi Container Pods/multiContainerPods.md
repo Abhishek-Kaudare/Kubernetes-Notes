@@ -14,7 +14,7 @@ Pod is an extra layer of abstraction around a container so that you can have dif
 
 Multi Container pods are generally required,
 
-- When the containers lifecycles are identical, or when they must run on the same node. The most common scenario is that you need to locate and manage a helper process on the same node as the primary container.
+- When the containers _`lifecycles are identical`_, or when they must run on the same node. The most common scenario is that you need to locate and manage a helper process on the same node as the primary container.
 
 - Another reason to group containers into a single pod is to make communication between them easier. Inter-process communication and shared volumes (writing to a shared file or directory) are two ways for these containers to communicate (semaphores or shared memory).
 
