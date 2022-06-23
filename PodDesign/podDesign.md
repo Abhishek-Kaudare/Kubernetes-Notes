@@ -1,4 +1,7 @@
 - [**Labels and Selectors**](#labels-and-selectors)
+- [**Annotations**](#annotations)
+  - [**Attaching metadata to objects**](#attaching-metadata-to-objects)
+  - [**Imperitive Commands**](#imperitive-commands)
 - [**Deployments: Rollout & Rollback**](#deployments-rollout--rollback)
   - [**Rollout**](#rollout)
     - [**Deployment Strategy**](#deployment-strategy)
@@ -54,7 +57,10 @@ spec:
         - "-c"
         - echo Hello Kubernetes! && sleep 3600
 ```
-
+Imperitive command
+```bash
+kubectl run pod nginx --image=nginx -l="key1=val2,key2=val2"
+```
 2. Get labels for all objects
 ```bash
 kubectl get all --show-labels
@@ -69,6 +75,37 @@ OR
 ```bash
 kubectl get all -l key1=value1
 ```
+Match by key
+```bash
+kubectl get all -L key
+```
+
+Multiple Match
+```bash
+kubectl get all -l 'key in (val1,val2)'
+```
+
+Change the label for one of the pod to env=uat and list all the pods to verify
+
+```bash
+kubectl label pod/nginx-dev3 env=uat --overwrite
+kubectl get pods --show-labels
+```
+
+Remove label with key 'env' and pods named nginx1, nginx2 and nginx3
+```bash
+kubectl label pod nginx(1..3} env-
+``` 
+
+Change value of label with key-value 'env=prod' and pods named nginx1, nginx2 and nginx3
+```bash
+kubectl label pod nginx(1..3} env=dev --overwrite
+``` 
+
+Add label with key-value 'feature=frontend' and pods named nginx1, nginx2 and nginx3
+```bash
+kubectl label pod nginx(1..3} feature=frontend 
+```
 
 4. Get count of selected
 
@@ -81,6 +118,48 @@ kubectl get all -l key1=value1 --no-headers | wc -l
 kubectl get all -l key1=value1,key2=value2
 # note: no space between two key value pairs
 ```
+
+# **Annotations**
+
+We can use Kubernetes annotations to attach arbitrary non-identifying metadata to objects. Clients such as tools and libraries can retrieve this metadata.
+
+## **Attaching metadata to objects**
+
+You can use either labels or annotations to attach metadata to Kubernetes objects. Labels can be used to select objects and to find collections of objects that satisfy certain conditions. In contrast, annotations are not used to identify and select objects. The metadata in an annotation can be small or large, structured or unstructured, and can include characters not permitted by labels.
+
+Annotations, like labels, are key/value maps:
+
+```yaml
+"metadata": {
+  "annotations": {
+    "key1" : "value1",
+    "key2" : "value2"
+  }
+}
+```
+## **Imperitive Commands**
+
+Add annotations with key-value 'name=webapp' and pods named nginx1, nginx2 and nginx3
+```bash
+kubectl annotate pod nginx{1..3} name=webapp
+```
+
+Verify the pods that have been annotated correctly
+```bash
+kubectl describe po nginx{1..3} | grep -i annotations
+```
+
+Remove the annotations on the pods and verify
+```bash
+kubectl annotate pod nginx{1..3} name-
+kubectl describe po nginx{1..3} | grep -i annotations
+```
+
+Remove all the pods that we created so far
+```bash
+kubectl delete po --all
+```
+
 # **Deployments: Rollout & Rollback**
 
 ## **Rollout**
@@ -99,13 +178,13 @@ The rolling update uses a readiness probe to check if a new pod is ready, before
 
 To perform a rolling update, simply update the image of your pods using kubectl set image. This will automatically trigger a rolling update.
 
-To refine your deployment strategy, change the parameters in the spec:strategy section of your manifest file. There are two optional parameters — `maxSurge` and `maxUnavailable`: 
+To refine your deployment strategy, change the parameters in the `spec:strategy` section of your manifest file. There are two optional parameters — `maxSurge` and `maxUnavailable`: 
 
 * `MaxSurge`: specifies the maximum number of pods the Deployment is allowed to create at one time. You can specify this as a whole number (e.g. 5), or as a percentage of the total required number of pods (e.g. 10%, always rounded up to the next whole number). If you do not set MaxSurge, the implicit, default value is 25%.
 
 * `MaxUnavailable`: specifies the maximum number of pods that are allowed to be unavailable during the rollout. Like MaxSurge, you can define it as an absolute number or a percentage. 
 
-At least one of these parameters must be larger than zero. By changing the values of these parameters, you can define other deployment strategies, as shown below.
+_At least one of these parameters must be larger than zero_. By changing the values of these parameters, you can define other deployment strategies, as shown below.
 
 ```yaml
 apiVersion: apps/v1
@@ -457,9 +536,9 @@ Jobs with *fixed completion count* - that is, jobs that have non null `.spec.
 
 ## **Handling Pod and container failures**
 
-A container in a Pod may fail for a number of reasons, such as because the process in it exited with a non-zero exit code, or the container was killed for exceeding a memory limit, etc. If this happens, and the `.spec.template.spec.restartPolicy = "OnFailure"`, then the Pod stays on the node, but the container is re-run. Therefore, your program needs to handle the case when it is restarted locally, or else specify `.spec.template.spec.restartPolicy = "Never"`. See [pod lifecycle](../Observability/observability.md#container-restart-policy) for more information on `restartPolicy`.
+A container in a Pod may fail for a number of reasons, such as because the process in it exited with a non-zero exit code, or the container was killed for exceeding a memory limit, etc. If this happens, and the `.spec.template.spec.restartPolicy = "OnFailure"`, _then the Pod stays on the node, but the container is re-run_. Therefore, your program needs to handle the case when it is restarted locally, or else specify `.spec.template.spec.restartPolicy = "Never"`. See [pod lifecycle](../Observability/observability.md#container-restart-policy) for more information on `restartPolicy`.
 
-An entire Pod can also fail, for a number of reasons, such as when the pod is kicked off the node (node is upgraded, rebooted, deleted, etc.), or if a container of the Pod fails and the `.spec.template.spec.restartPolicy = "Never"`. When a Pod fails, then the Job controller starts a new Pod. This means that your application needs to handle the case when it is restarted in a new pod. In particular, it needs to handle temporary files, locks, incomplete output and the like caused by previous runs.
+An entire Pod can also fail, for a number of reasons, such as when the pod is kicked off by the node (node is upgraded, rebooted, deleted, etc.), or if a container of the Pod fails and the `.spec.template.spec.restartPolicy = "Never"`. When a Pod fails, then the Job controller starts a new Pod. This means that your application needs to handle the case when it is restarted in a new pod. In particular, it needs to handle temporary files, locks, incomplete output and the like caused by previous runs.
 
 Note that even if you specify `.spec.parallelism = 1` and `.spec.completions = 1` and `.spec.template.spec.restartPolicy = "Never"`, the same program may sometimes be started twice.
 
@@ -476,7 +555,7 @@ There are situations where you want to fail a Job after some amount of retries d
 
 ## **Job termination and cleanup**
 
-When a Job completes, no more Pods are created, but the Pods are [usually](#pod-backoff-failure-policy) not deleted either. Keeping them around allows you to still view the logs of completed pods to check for errors, warnings, or other diagnostic output. The job object also remains after it is completed so that you can view its status. It is up to the user to delete old jobs after noting their status. Delete the job with `kubectl` (e.g. `kubectl delete jobs/<job-name>` or `kubectl delete -f ./job.yaml`). When you delete the job using `kubectl`, all the pods it created are deleted too.
+When a Job completes, no more Pods are created, but the Pods are [usually](#pod-backoff-failure-policy) not deleted either. Keeping them around allows you to still view the logs of completed pods to check for errors, warnings, or other diagnostic output. The job object also remains after it is completed so that you can view its status. _It is up to the user to delete old jobs after noting their status_. Delete the job with `kubectl` (e.g. `kubectl delete jobs/<job-name>` or `kubectl delete -f ./job.yaml`). When you delete the job using `kubectl`, all the pods it created are deleted too.
 
 By default, a Job will run uninterrupted unless a Pod fails (`restartPolicy=Never`) or a Container exits in error (`restartPolicy=OnFailure`), at which point the Job defers to the `.spec.backoffLimit` described above. Once `.spec.backoffLimit` has been reached the Job will be marked as failed and any running Pods will be terminated.
 
