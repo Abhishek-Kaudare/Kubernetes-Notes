@@ -275,7 +275,8 @@ A PersistentVolume can be mounted on a host in any way supported by the resource
     - `RWOP` - ReadWriteOncePod
 
 - **Class**:
-A PV can have a class, which is specified by setting the `storageClassName` attribute to the name of a StorageClass. A PV of a particular class can only be bound to PVCs requesting that class. A PV with no `storageClassName` has no class and can only be bound to PVCs that request no particular class.
+  
+  A PV can have a class, which is specified by setting the `storageClassName` attribute to the name of a StorageClass. A PV of a particular class can only be bound to PVCs requesting that class. A PV with no `storageClassName` has no class and can only be bound to PVCs that request no particular class.
 
 - **Reclaim Policy**:
 
@@ -291,16 +292,16 @@ A Kubernetes administrator can specify additional mount options for when a Persi
 
 - **Node Affinity**:
 
-A PV can specify node affinity to define constraints that limit what nodes this volume can be accessed from. Pods that use a PV will only be scheduled to nodes that are selected by the node affinity. To specify node affinity, set `nodeAffinity` in the `.spec` of a PV.
+  A PV can specify node affinity to define constraints that limit what nodes this volume can be accessed from. Pods that use a PV will only be scheduled to nodes that are selected by the node affinity. To specify node affinity, set `nodeAffinity` in the `.spec` of a PV.
 
 - **Phase**:
 A volume will be in one of the following phases:
 
-- Available -- a free resource that is not yet bound to a claim
-- Bound -- the volume is bound to a claim
-- Released -- the claim has been deleted, but the resource is not yet reclaimed by the cluster
-- Failed -- the volume has failed its automatic reclamation
-The CLI will show the name of the PVC bound to the PV.
+  - Available -- a free resource that is not yet bound to a claim
+  - Bound -- the volume is bound to a claim
+  - Released -- the claim has been deleted, but the resource is not yet reclaimed by the cluster
+  - Failed -- the volume has failed its automatic reclamation
+  The CLI will show the name of the PVC bound to the PV.
 
 ## **Persistent Volume Claims**
 
