@@ -1,30 +1,26 @@
 # **Table of Contents**
 
-- [**Table of Contents**](#table-of-contents)
-- [**Core Concepts**](#core-concepts)
-  - [**Pods**](#pods)
-    - [pod-definition.yml](#pod-definitionyml)
-  - [**Replica Sets**](#replica-sets)
-  - [**Deployments**](#deployments)
-  - [**Namespaces**](#namespaces)
-    - [**When to Use Multiple Namespaces**](#when-to-use-multiple-namespaces)
-    - [**Namespaces and DNS**](#namespaces-and-dns)
-    - [**Working with Namespaces**](#working-with-namespaces)
-      - [**Create Namespace**](#create-namespace)
-      - [**List Namespaces**](#list-namespaces)
-      - [**Setting the namespace for a request**](#setting-the-namespace-for-a-request)
-      - [**Setting Request for all namespaces**](#setting-request-for-all-namespaces)
-      - [**Setting the namespace preference**](#setting-the-namespace-preference)
-    - [**Not All Objects are in a Namespace**](#not-all-objects-are-in-a-namespace)
-  - [**Resource Quota**](#resource-quota)
+- [**Pods**](#pods)
+  - [**Pod Definition File**](#pod-definitionyml)
+- [**Replica Sets**](#replica-sets)
+- [**Deployments**](#deployments)
+- [**Namespaces**](#namespaces)
+  - [**When to Use Multiple Namespaces**](#when-to-use-multiple-namespaces)
+  - [**Namespaces and DNS**](#namespaces-and-dns)
+  - [**Working with Namespaces**](#working-with-namespaces)
+    - [**Create Namespace**](#create-namespace)
+    - [**List Namespaces**](#list-namespaces)
+    - [**Setting the namespace for a request**](#setting-the-namespace-for-a-request)
+    - [**Setting Request for all namespaces**](#setting-request-for-all-namespaces)
+    - [**Setting the namespace preference**](#setting-the-namespace-preference)
+  - [**Not All Objects are in a Namespace**](#not-all-objects-are-in-a-namespace)
+- [**Resource Quota**](#resource-quota)
 
 
-# **Core Concepts**
-
-## **Pods**
+# **Pods**
 1. Creating Pods
 
-### pod-definition.yml
+## **Pod Definition File**
 
 ```yaml
 apiVersion: v1
@@ -116,7 +112,7 @@ $ kc delete po --all
 ```shell
 $ kc exec -it pod-name /bin/sh (or /bin/bash, if available)
 ```
-## **Replica Sets**
+# **Replica Sets**
 A template section under spec can define a child resource, e.g., a pod resource under replicaSet's spec.template section. Do not include apiVersion or kind in the template.
 
 A replicaset requires the selector section with matchLabels defining the pod label to replicate on. It is still required to include the pod template even if the pods already exist before creating the replicaset, as any scale-up of more or failed pods will be done from this template.
@@ -162,7 +158,7 @@ $ kc replace -f replicaset-definition.yaml
 ```shell
 $ kc get rs ngnix-replicaset -o yaml > nginx-replicaset.yaml
 ```
-## **Deployments**
+# **Deployments**
 
 1. How many PODs exist on the system?
 ```bash
@@ -253,7 +249,7 @@ kubectl get deployments
 ```
 
 
-## **Namespaces**
+# **Namespaces**
 
 In Kubernetes, namespaces provides a mechanism for isolating groups of resources within a single cluster. Names of resources need to be unique within a namespace, but not across namespaces. Namespace-based scoping is applicable only for namespaced objects (e.g. Deployments, Services, etc) and not for cluster-wide objects (e.g. StorageClass, Nodes, PersistentVolumes, etc).
 
@@ -268,7 +264,7 @@ Kubernetes starts with four initial namespaces:
 
 
 
-### **When to Use Multiple Namespaces**
+## **When to Use Multiple Namespaces**
 
 
 Namespaces are intended for use in **environments with many users spread across multiple teams, or projects**. For clusters with a few to tens of users, you should not need to create or think about namespaces at all. Start using namespaces when you need the features they provide.
@@ -284,7 +280,7 @@ It is not necessary to use multiple namespaces to separate slightly different re
 
 
 
-### **Namespaces and DNS**
+## **Namespaces and DNS**
 When you create a Service, it creates a corresponding DNS entry. This entry is of the form `<service-name>.<namespace-name>.svc.cluster.local`, which means that if a container only uses <service-name>, it will resolve to the service which is local to a namespace. 
 
 This is useful for using the same configuration across multiple namespaces such as Development, Staging and Production. 
@@ -294,10 +290,10 @@ If you want to reach across namespaces, you need to use the fully qualified doma
 
 
 
-### **Working with Namespaces**
+## **Working with Namespaces**
 
 
-#### **Create Namespace**
+## **Create Namespace**
 mamespace definition file:
 ```yaml
 apiVersion: v1
@@ -315,7 +311,7 @@ kubectl create namespace <insert-namespace-name-here>
 ```
 
 
-#### **List Namespaces**
+## **List Namespaces**
 ```bash
 kubectl get namespace
 ```
@@ -330,7 +326,7 @@ kube-system       Active   1d
 
 
 
-#### **Setting the namespace for a request**
+## **Setting the namespace for a request**
 When we run it request it runs for the **default namespace**. To set the namespace for a current request, use the `--namespace` flag.
 
 ```bash
@@ -390,7 +386,7 @@ spec:
 
 
 
-#### **Setting Request for all namespaces**
+## **Setting Request for all namespaces**
 
 To set the request for all namespaces, use the `--all-namespaces` flag.
 
@@ -399,7 +395,7 @@ kubectl get pods --all-namespaces
 ```
 
 
-#### **Setting the namespace preference**
+## **Setting the namespace preference**
 You can permanently save the namespace for all subsequent kubectl commands in that context.
 
 ```bash
@@ -409,7 +405,7 @@ kubectl config set-context --current --namespace=<insert-namespace-name-here>
 kubectl config view --minify | grep namespace:
 ```
 
-### **Not All Objects are in a Namespace** 
+## **Not All Objects are in a Namespace** 
 Most Kubernetes resources (e.g. pods, services, replication controllers, and others) are in some namespaces. However namespace resources are not themselves in a namespace. And low-level resources, such as **nodes and persistentVolumes, are *not in any namespace***.
 
 To see which Kubernetes resources are and aren't in a namespace:
@@ -422,7 +418,7 @@ kubectl api-resources --namespaced=true
 kubectl api-resources --namespaced=false
 ```
 
-## **Resource Quota**
+# **Resource Quota**
 
 Definition File:
 ```yaml
