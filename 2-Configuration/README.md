@@ -36,6 +36,7 @@
 - [**Resource Requirements**](#resource-requirements)
   - [**CPU**](#cpu)
   - [**Memory**](#memory)
+  - [**Limits**](#limits)
 - [**Taints & Tolerations**](#taints--tolerations)
   - [**Untaint Node**](#untaint-node)
 - [**Node Selectors**](#node-selectors)
@@ -43,7 +44,7 @@
   - [**Show labels of Node**](#show-labels-of-node)
   - [**Creating a pod with node selectors**](#creating-a-pod-with-node-selectors)
   - [**Limits of Node Selectors**](#limits-of-node-selectors)
-- [Affinity and anti-affinity](#affinity-and-anti-affinity)
+- [**Affinity and anti-affinity**](#affinity-and-anti-affinity)
   - [**Node Affinity**](#node-affinity)
     - [**Node affinity weight**](#node-affinity-weight)
     - [**Taints & Tolerations + Node Affinity**](#taints--tolerations--node-affinity)
@@ -478,9 +479,9 @@ There are two types of accounts in Kubernetes, an user account and a service acc
 
 - Create Service Accounts
 
-```bash
-kubectl create serviceaccount <sa-name>
-```
+  ```bash
+  kubectl create serviceaccount <sa-name>
+  ```
 
 - List Service Accounts
   
@@ -494,18 +495,17 @@ kubectl create serviceaccount <sa-name>
   kubectl describe serviceaccount <sa-name>
   ```
 
------------------------------------------
-
-Name:                default
-Namespace:           default
-Labels:              <none>
-Annotations:         <none>
-Image pull secrets:  <none>
-Mountable secrets:   default-token-8qrrx
-Tokens:              default-token-8qrrx
-Events:              <none>
-
-```
+  Default Service Account:
+  ```
+  Name:                default
+  Namespace:           default
+  Labels:              <none>
+  Annotations:         <none>
+  Image pull secrets:  <none>
+  Mountable secrets:   default-token-8qrrx
+  Tokens:              default-token-8qrrx
+  Events:              <none>
+  ```
 ## **Service Account Token**
 When the service account is created, it also creates a token automatically, the `service account token` is what must be used by the external application while authenticating to the Kubernetes API.
 
@@ -680,6 +680,8 @@ Unit of measure
     Mebibyte (MiB) = 1,048,576 bytes
     
     Gibibyte (GiB) = 1,073,741,824 bytes
+
+## **Limits**
 
 ```yaml
 apiVersion: v1
@@ -861,7 +863,7 @@ spec:
 
 We are just using one label so this is not enough for complex requirement, like if we want to place the node on `medium or large nodes`, or say on `all node that are not small`.
 
-# Affinity and anti-affinity
+# **Affinity and anti-affinity**
 
 `nodeSelector` is the simplest way to constrain Pods to nodes with specific labels. _Affinity and anti-affinity expands the types of constraints_ you can define. Some of the benefits of affinity and anti-affinity include:
 
