@@ -45,6 +45,12 @@
   - [**Not All Objects are in a Namespace**](#not-all-objects-are-in-a-namespace)
 - [**Resource Quota**](#resource-quota)
   - [**Resource Quota Definition File**](#resource-quota-definition-file)
+    - [**Compute Quota**](#compute-quota)
+    - [**Count Quota**](#count-quota)
+  - [**Imperative Commands**](#imperative-commands)
+  - [**Compute Resource Quota**](#compute-resource-quota)
+  - [**Storage Resource Quota**](#storage-resource-quota)
+  - [**Object Count Quota**](#object-count-quota)
 
 
 # **Pods**
@@ -493,26 +499,110 @@ It can limit the _quantity of objects_ that can be created in a namespace by typ
   - **Hint**: Use the `LimitRanger` admission controller to force defaults for pods that make no compute resource requirements.
 
 ## **Resource Quota Definition File**
+
+### **Compute Quota**
 ```yaml
 apiVersion: v1
 kind: ResourceQuota
 metadata:
-  name: compute-quota
-  namespace: dev
+  name: compute-resources
+  namespace: dev # optional
 spec:
   hard:
-    pods: "10"
-    requests.cpu: "4"
-    requests.memory: 5Gi
-    limits.cpu: "10"
-    limits.memory: 10Gi
+    requests.cpu: "1"
+    requests.memory: 1Gi
+    limits.cpu: "2"
+    limits.memory: 2Gi
+    requests.nvidia.com/gpu: 4
+```
+### **Count Quota**
+```yaml
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: object-counts
+  namespace: dev # optional
+spec:
+  hard:
+    configmaps: "10"
+    persistentvolumeclaims: "4"
+    pods: "4"
+    replicationcontrollers: "20"
+    secrets: "10"
+    services: "10"
+    services.loadbalancers: "2"
 ```
 
 ```bash
 kubectl create -f <quota definition file path>
 ```
 
-Imperative Commands:
+## **Imperative Commands**
 ```bash
-kubectl create quota <quota-name> --hard=cpu=1,memory=1G,pods=2 --dry-run=client -o yaml
+kubectl create quota test --hard=count/deployments.apps=2,count/replicasets.apps=4,count/pods=3,count/secrets=4 --namespace=myspace
 ```
+
+## **Compute Resource Quota**
+
+You can limit the total sum of [compute resources](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/) that can be requested in a given namespace.
+
+The following resource types are supported:
+
+| Resource Name | Description |
+| --------------------- | ----------------------------------------------------------- |
+| `limits.cpu` | Across all pods in a non-terminal state, the sum of CPU limits cannot exceed this value. |
+| `limits.memory` | Across all pods in a non-terminal state, the sum of memory limits cannot exceed this value. |
+| `requests.cpu` | Across all pods in a non-terminal state, the sum of CPU requests cannot exceed this value. |
+| `requests.memory` | Across all pods in a non-terminal state, the sum of memory requests cannot exceed this value. |
+| `hugepages-<size>` | Across all pods in a non-terminal state, the number of huge page requests of the specified size cannot exceed this value. |
+| `cpu` | Same as `requests.cpu` |
+| `memory` | Same as `requests.memory` |
+
+## **Storage Resource Quota**
+
+You can limit the total sum of [storage resources](/docs/concepts/storage/persistent-volumes/) that can be requested in a given namespace.
+
+In addition, you can limit consumption of storage resources based on associated storage-class.
+
+| Resource Name | Description |
+| --------------------- | ----------------------------------------------------------- |
+| `requests.storage` | Across all persistent volume claims, the sum of storage requests cannot exceed this value. |
+| `persistentvolumeclaims` | The total number of [PersistentVolumeClaims](/docs/concepts/storage/persistent-volumes/#persistentvolumeclaims) that can exist in the namespace. |
+| `<storage-class-name>.storageclass.storage.k8s.io/requests.storage` | Across all persistent volume claims associated with the `<storage-class-name>`, the sum of storage requests cannot exceed this value. |
+| `<storage-class-name>.storageclass.storage.k8s.io/persistentvolumeclaims` | Across all persistent volume claims associated with the storage-class-name, the total number of [persistent volume claims](/docs/concepts/storage/persistent-volumes/#persistentvolumeclaims) that can exist in the namespace. |
+
+For example, if an operator wants to quota storage with `gold` storage class separate from `bronze` storage class, the operator can
+define a quota as follows:
+
+* `gold.storageclass.storage.k8s.io/requests.storage: 500Gi`
+* `bronze.storageclass.storage.k8s.io/requests.storage: 100Gi`
+
+## **Object Count Quota**
+
+You can set quota for the total number of certain resources of all standard,
+namespaced resource types using the following syntax:
+
+* `count/<resource>.<group>` for resources from non-core groups
+* `count/<resource>` for resources from the core group
+
+Here is an example set of resources users may want to put under object count quota:
+
+* `count/persistentvolumeclaims`
+* `count/services`
+* `count/secrets`
+* `count/configmaps`
+* `count/replicationcontrollers`
+* `count/deployments.apps`
+* `count/replicasets.apps`
+* `count/statefulsets.apps`
+* `count/jobs.batch`
+* `count/cronjobs.batch`
+
+The same syntax can be used for custom resources.
+For example, to create a quota on a `widgets` custom resource in the `example.com` API group, use `count/widgets.example.com`.
+
+When using `count/*` resource quota, an object is charged against the quota if it exists in server storage.
+These types of quotas are useful to protect against exhaustion of storage resources.  For example, you may
+want to limit the number of Secrets in a server given their large size. Too many Secrets in a cluster can
+actually prevent servers and controllers from starting. You can set a quota for Jobs to protect against
+a poorly configured CronJob. CronJobs that create too many Jobs in a namespace can lead to a denial of service.
