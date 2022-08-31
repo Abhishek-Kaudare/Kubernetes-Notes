@@ -13,8 +13,9 @@
   - [**8. Get running pod defintion from k8s and edit/update**](#8-get-running-pod-defintion-from-k8s-and-editupdate)
   - [**9. Edit running pod definition directly**](#9-edit-running-pod-definition-directly)
   - [**10. Delete all pods in default namespace**](#10-delete-all-pods-in-default-namespace)
-  - [**11. Shell into (if possible) a running pod**](#11-shell-into-if-possible-a-running-pod)
-  - [**12. List pods with selector**](#12-list-pods-with-selector)
+  - [**11. List pods with selector**](#11-list-pods-with-selector)
+  - [**12. Shell into (if possible) a running pod**](#12-shell-into-if-possible-a-running-pod)
+  - [**13. Run '/bin/sh' command in a pod, and delete the pod after running the command**](#13-run-binsh-command-in-a-pod-and-delete-the-pod-after-running-the-command)
 - [**Replica Sets**](#replica-sets)
   - [**1. Create a replicaset**](#1-create-a-replicaset)
     - [**Replica Set Definition File**](#replica-set-definition-file)
@@ -143,15 +144,21 @@ $ kc edit po <pod-name>
 $ kc delete po --all
 ```
 
-## **11. Shell into (if possible) a running pod**
-
-```shell
-$ kc exec -it <pod-name> /bin/sh (or /bin/bash, if available)
-```
-
-## **12. List pods with selector**
+## **11. List pods with selector**
 ```shell
 $ kc get pod -l key1=value1,key2=value2
+```
+
+## **12. Shell into (if possible) a running pod**
+
+```shell
+$ kc exec -it <pod-name> -- /bin/sh (or /bin/bash, if available)
+```
+
+## **13. Run '/bin/sh' command in a pod, and delete the pod after running the command**
+```shell
+$ kc run <pod-name> --image=busybox  --restart=Never -it --rm command -- /bin/sh
+# -it will help in seeing the output, --rm will immediately delete the pod after it exits
 ```
 
 # **Replica Sets**
