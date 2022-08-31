@@ -209,6 +209,11 @@ To check the logs run following commands:
 ```bash
 kubectl logs <pod-name>
 ```
+To see logs of previous instance (Say Before Restart)
+```bash
+kubectl logs <pod-name> -p
+kubectl logs <pod-name> --previous
+```
 *Multi Container Pods*:
 ```bash
 kubectl logs <pod-name> <container-name>
