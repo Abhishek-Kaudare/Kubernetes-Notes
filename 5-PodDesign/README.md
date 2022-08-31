@@ -25,7 +25,7 @@
   - [**Job patterns**](#job-patterns)
 - [**CronJob**](#cronjob)
   - [**Cron schedule syntax**](#cron-schedule-syntax)
-- [**Refernces**](#refernces)
+- [**References**](#references)
 
 # **Labels and Selectors**
 
@@ -728,7 +728,7 @@ kubectl create cronjob <cron=job-name> --image <image-name> --schedule "0 0 13 *
 ```
 
 
-# **Refernces**
+# **References**
 
 1. [5 Kubernetes Deployment Strategies: Roll Out Like the Pros](https://spot.io/resources/kubernetes-autoscaling/5-kubernetes-deployment-strategies-roll-out-like-the-pros)
 2. [k8 Jobs Docs](https://kubernetes.io/docs/concepts/workloads/controllers/job/)
