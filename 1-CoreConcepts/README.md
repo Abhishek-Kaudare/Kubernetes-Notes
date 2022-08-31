@@ -16,6 +16,7 @@
   - [**11. List pods with selector**](#11-list-pods-with-selector)
   - [**12. Shell into (if possible) a running pod**](#12-shell-into-if-possible-a-running-pod)
   - [**13. Run '/bin/sh' command in a pod, and delete the pod after running the command**](#13-run-binsh-command-in-a-pod-and-delete-the-pod-after-running-the-command)
+  - [**14. Create an nginx pod and set an env value as 'var1=val1 & var2=val2'. Check the env value existence within the pod**](#14-create-an-nginx-pod-and-set-an-env-value-as-var1val1--var2val2-check-the-env-value-existence-within-the-pod)
 - [**Replica Sets**](#replica-sets)
   - [**1. Create a replicaset**](#1-create-a-replicaset)
     - [**Replica Set Definition File**](#replica-set-definition-file)
@@ -159,6 +160,13 @@ $ kc exec -it <pod-name> -- /bin/sh (or /bin/bash, if available)
 ```shell
 $ kc run <pod-name> --image=busybox  --restart=Never -it --rm command -- /bin/sh
 # -it will help in seeing the output, --rm will immediately delete the pod after it exits
+```
+
+## **14. Create an nginx pod and set an env value as 'var1=val1 & var2=val2'. Check the env value existence within the pod**
+```shell
+$ kc run <pod-name> --image=nginx --restart=Never --env=var1=val1 --env=var2=val2
+$ # then
+$ kc exec -it <pod-name> -- env
 ```
 
 # **Replica Sets**
