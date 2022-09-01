@@ -1,6 +1,8 @@
 # Table of Contents
 - [Table of Contents](#table-of-contents)
 - [Basic Setup](#basic-setup)
+  - [Vim Setup](#vim-setup)
+    - [Persist Vim settings in .vimrc](#persist-vim-settings-in-vimrc)
   - [YAML Manifests](#yaml-manifests)
   - [Environment Setup](#environment-setup)
 - [Pods](#pods)
@@ -27,6 +29,24 @@
 - [Cluster Monitoring](#cluster-monitoring)
 
 # Basic Setup
+
+## Vim Setup
+
+> The following settings will already be configured in your real exam environment in `~/.vimrc`. But it can never hurt to be able to type these down
+### Persist Vim settings in .vimrc
+First create or open (if already exists) file .vimrc :
+
+```bash
+vim ~/.vimrc
+```
+Now enter (in insert-mode activated with `i`) the following lines:
+
+```bash
+set expandtab
+set tabstop=2
+set shiftwidth=2
+```
+Save and close the file by pressing Esc followed by `:x` and `Enter`.
 
 
 ## YAML Manifests
