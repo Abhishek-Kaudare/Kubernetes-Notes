@@ -1,14 +1,11 @@
 # **Table of Contents**
 - [**Table of Contents**](#table-of-contents)
 - [**Certification Tip: Imperative Commands**](#certification-tip-imperative-commands)
-  - [**POD**](#pod)
-  - [**Deployment**](#deployment)
-  - [**Service**](#service)
   - [**Formatting Output with kubectl**](#formatting-output-with-kubectl)
-- [**A quick note on editing PODs and Deployments**](#a-quick-note-on-editing-pods-and-deployments)
-  - [**Edit a POD**](#edit-a-pod)
-  - [**Edit Deployments**](#edit-deployments)
 - [**Find options for commands easily in cli**](#find-options-for-commands-easily-in-cli)
+- [**Resources**](#resources)
+  - [**Practice Questions**](#practice-questions)
+  - [**Review and Tips**](#review-and-tips)
 
 # **Certification Tip: Imperative Commands**
 
@@ -20,94 +17,6 @@ Before we begin, familiarize with the two options that can come in handy while w
 - `-o yaml`: This will output the resource definition in YAML format on screen.
 
 Use the above two in combination to generate a resource definition file quickly, that you can then modify and create resources as required, instead of creating the files from scratch.
-
-## **POD**
-
-**Create an NGINX Pod**
-
-```bash
-kubectl run nginx --image=nginx
-```
-
-**Generate POD Manifest YAML file (-o yaml). Don't create it(--dry-run)**
-
-```bash
-kubectl run nginx --image=nginx --dry-run=client -o yaml
-```
-
-## **Deployment**
-
-**Create a deployment**
-
-```bash
-kubectl create deployment --image=nginx nginx
-```
-
-**Generate Deployment YAML file (-o yaml). Don't create it(--dry-run)**
-
-```bash
-kubectl create deployment --image=nginx nginx --dry-run -o yaml
-```
-
-**Generate Deployment with 4 Replicas**
-
-```bash
-kubectl create deployment nginx --image=nginx --replicas=4
-```
-
-You can also scale a deployment using the `kubectl scale` command.
-
-```bash
-kubectl scale deployment nginx --replicas=4
-```
-
-**Another way to do this is to save the YAML definition to a file and modify**
-
-```bash
-kubectl create deployment nginx --image=nginx --dry-run=client -o yaml > nginx-deployment.yaml
-```
-
-You can then update the YAML file with the replicas or any other field before creating the deployment.
-
-## **Service**
-
-**Create a Service named redis-service of type ClusterIP to expose pod redis on port 6379**
-
-```bash
-kubectl expose pod redis --port=6379 --name redis-service --dry-run=client -o yaml
-```
-
-(This will automatically use the pod's labels as selectors)
-
-Or
-
-```bash
-kubectl create service clusterip redis --tcp=6379:6379 --dry-run=client -o yaml 
-```
-
-(This will not use the pods labels as selectors, instead it will assume selectors as **app=redis.** [You cannot pass in selectors as an option.](https://github.com/kubernetes/kubernetes/issues/46191) So it does not work very well if your pod has a different label set. So generate the file and modify the selectors before creating the service)
-
-**Create a Service named nginx of type NodePort to expose pod nginx's port 80 on port 30080 on the nodes:**
-
-```bash
-kubectl expose pod nginx --port=80 --name nginx-service --type=NodePort --dry-run=client -o yaml
-```
-
-(This will automatically use the pod's labels as selectors, [but you cannot specify the node port](https://github.com/kubernetes/kubernetes/issues/25478). You have to generate a definition file and then add the node port in manually before creating the service with the pod.)
-
-Or
-
-```bash
-kubectl create service nodeport nginx --tcp=80:80 --node-port=30080 --dry-run=client -o yaml
-```
-
-(This will not use the pods labels as selectors)
-
-Both the above commands have their own challenges. While one of it cannot accept a selector the other cannot accept a node port. I would recommend going with the `kubectl expose` command. If you need to specify a node port, generate a definition file using the same command and manually input the nodeport before creating the service.
-
-**Reference:**
-
-[https://kubernetes.io/docs/reference/kubectl/conventions/](https://kubernetes.io/docs/reference/kubectl/conventions/)
 
 ## **Formatting Output with kubectl**
 
@@ -178,77 +87,6 @@ ningx     1/1     Running   0          7m32s   10.44.0.1   node03   <none>      
 redis     1/1     Running   0          3m59s   10.36.0.1   node01   <none>           <none>
 ```
 
-
-# **A quick note on editing PODs and Deployments**
-
-## **Edit a POD**
-
-Remember, you CANNOT edit specifications of an existing POD other than the below.
-
-- spec.containers[*].image
-- spec.initContainers[*].image
-- spec.activeDeadlineSeconds
-- spec.tolerations
-
-For example you cannot edit the environment variables, service accounts, resource limits (all of which we will discuss later) of a running pod. But if you really want to, you have 2 options:
-
-1. Run the `kubectl edit pod <pod name>` command.  This will open the pod specification in an editor (vi editor). Then edit the required properties. When you try to save it, you will be denied. This is because you are attempting to edit a field on the pod that is not editable.
-
-![https://img-b.udemycdn.com/redactor/raw/2019-05-30_14-46-21-89ea56fea6b993ee0ccff1625b13341e.PNG?secure=nD7DVE-FJ91gwBmXzq_9LQ%3D%3D%2C1644841832](https://img-b.udemycdn.com/redactor/raw/2019-05-30_14-46-21-89ea56fea6b993ee0ccff1625b13341e.PNG?secure=nD7DVE-FJ91gwBmXzq_9LQ%3D%3D%2C1644841832)
-
-![https://img-b.udemycdn.com/redactor/raw/2019-05-30_14-47-14-07b2638d1a72cb2d5b000c00971f6436.PNG?secure=-hg1g4YYc6-hPQ3xkAeflQ%3D%3D%2C1644841832](https://img-b.udemycdn.com/redactor/raw/2019-05-30_14-47-14-07b2638d1a72cb2d5b000c00971f6436.PNG?secure=-hg1g4YYc6-hPQ3xkAeflQ%3D%3D%2C1644841832)
-
-A copy of the file with your changes is saved in a temporary location as shown above.
-
-You can then delete the existing pod by running the command:
-
-```bash
-kubectl delete pod webapp
-```
-
-Then create a new pod with your changes using the temporary file
-
-```bash
-kubectl create -f /tmp/kubectl-edit-ccvrq.yaml
-```
-
-2. The second option is to extract the pod definition in YAML format to a file using the command
-
-```bash
-kubectl get pod webapp -o yaml > my-new-pod.yaml
-```
-
-Then make the changes to the exported file using an editor (vi editor). Save the changes
-
-```bash
-vi my-new-pod.yaml
-```
-
-Then delete the existing pod
-
-```bash
-kubectl delete pod webapp
-```
-
-Then create a new pod with the edited file
-
-```bash
-kubectl create -f my-new-pod.yaml
-```
-
-
-```bash
-kubectl edit deployment my-deployment
-```
-
-## **Edit Deployments**
-
-With Deployments you can easily edit any field/property of the POD template. Since the pod template is a child of the deployment specification,  with every change the deployment will automatically delete and create a new pod with the new changes. So if you are asked to edit a property of a POD part of a deployment you may do that simply by running the command
-
-```bash
-kubectl edit deployment my-deployment
-```
-
 # **Find options for commands easily in cli**
 
 
@@ -261,3 +99,20 @@ Inside less terminal press `/` and type the pattern that you want to search top 
 # Get the n lines from matching pattern
 kubectl explain po --recursive | grep -A<number of lines> <pattern>
 ```
+
+# **Resources**
+
+## **Practice Questions**
+
+1. [CKAD-exercises - dgkanatsios GitHub](https://github.com/dgkanatsios/CKAD-exercises)
+2. [Kubernetes Tutorials with CKA and CKAD Prep Guide - School Of Devops](https://kubernetes-tutorial.schoolofdevops.com/)
+3. [ckad-labs - kensipe GitHub](https://github.com/kensipe/ckad-labs)
+4. [Practice Enough With These 150 Questions for the CKAD Exam - Bhargav Bachina](https://medium.com/bb-tutorials-and-thoughts/practice-enough-with-these-questions-for-the-ckad-exam-2f42d1228552)
+5. [Kubernetes CKAD Example Exam Questions Practical Challenge Series - Kim Wuestkamp](https://codeburst.io/kubernetes-ckad-weekly-challenges-overview-and-tips-7282b36a2681)
+6. [Practice Exam for Certified Kubernetes Application Developer (CKAD) Certification - Matthew Palmer](https://matthewpalmer.net/kubernetes-app-developer/articles/ckad-practice-exam.html)
+7. [Answers to Five Certified Kubernetes Application Developer CKAD Practice Questions (2021)](https://thospfuller.com/2020/11/09/answers-to-five-kubernetes-ckad-practice-questions-2021/)
+8. [CKAD Self-Study Course - rx-m.com/](https://rx-m.com/ckad-online-training/) 
+
+## **Review and Tips** 
+
+1. [Passing CKAD with flying colours - Damian Fiłonowicz](https://blog.datumo.io/updated-q3-2021-passing-ckad-with-flying-colours-e82ccf42fa3a)
