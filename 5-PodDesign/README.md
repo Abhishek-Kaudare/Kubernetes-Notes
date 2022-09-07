@@ -6,9 +6,13 @@
   - [**Rollout**](#rollout)
     - [**Deployment Strategy**](#deployment-strategy)
     - [**Creating a deployment**](#creating-a-deployment)
+    - [**Scaling the deployment**](#scaling-the-deployment)
     - [**Get rollout status**](#get-rollout-status)
     - [**Get rollout history**](#get-rollout-history)
   - [**Rollback**](#rollback)
+- [**A quick note on editing PODs and Deployments**](#a-quick-note-on-editing-pods-and-deployments)
+  - [**Edit a POD**](#edit-a-pod)
+  - [**Edit Deployments**](#edit-deployments)
 - [**Job**](#job)
   - [**Running a Job**](#running-a-job)
   - [**Writing a Job spec**](#writing-a-job-spec)
@@ -267,10 +271,19 @@ However, when the _*rolling update strategy*_ was used, the old replica set was 
 ### **Creating a deployment**
 
 ```bash
-kubectl create deployment <deployment-name> --image=<image-name>
+kubectl create deployment <deployment-name> --image=<image-name> --replicas=<replica-no>
 ----------------------------------------------------------------
 deployment.apps/deployment-name created
 ```
+
+### **Scaling the deployment**
+
+You can also scale a deployment using the `kubectl scale` command.
+
+```bash
+kubectl scale deployment <deployment-name> --replicas=<replica-no>
+```
+
 ### **Get rollout status**
 
 ```bash
@@ -382,6 +395,77 @@ Pod Template: Labels:    app=<app-name>
 ```bash
 kubectl rollout undo deployment/<deployment-name>
 ```
+
+# **A quick note on editing PODs and Deployments**
+
+## **Edit a POD**
+
+Remember, you CANNOT edit specifications of an existing POD other than the below.
+
+- spec.containers[*].image
+- spec.initContainers[*].image
+- spec.activeDeadlineSeconds
+- spec.tolerations
+
+For example you cannot edit the environment variables, service accounts, resource limits (all of which we will discuss later) of a running pod. But if you really want to, you have 2 options:
+
+1. Run the `kubectl edit pod <pod name>` command.  This will open the pod specification in an editor (vi editor). Then edit the required properties. When you try to save it, you will be denied. This is because you are attempting to edit a field on the pod that is not editable.
+
+![https://img-b.udemycdn.com/redactor/raw/2019-05-30_14-46-21-89ea56fea6b993ee0ccff1625b13341e.PNG?secure=nD7DVE-FJ91gwBmXzq_9LQ%3D%3D%2C1644841832](https://img-b.udemycdn.com/redactor/raw/2019-05-30_14-46-21-89ea56fea6b993ee0ccff1625b13341e.PNG?secure=nD7DVE-FJ91gwBmXzq_9LQ%3D%3D%2C1644841832)
+
+![https://img-b.udemycdn.com/redactor/raw/2019-05-30_14-47-14-07b2638d1a72cb2d5b000c00971f6436.PNG?secure=-hg1g4YYc6-hPQ3xkAeflQ%3D%3D%2C1644841832](https://img-b.udemycdn.com/redactor/raw/2019-05-30_14-47-14-07b2638d1a72cb2d5b000c00971f6436.PNG?secure=-hg1g4YYc6-hPQ3xkAeflQ%3D%3D%2C1644841832)
+
+A copy of the file with your changes is saved in a temporary location as shown above.
+
+You can then delete the existing pod by running the command:
+
+```bash
+kubectl delete pod webapp
+```
+
+Then create a new pod with your changes using the temporary file
+
+```bash
+kubectl create -f /tmp/kubectl-edit-ccvrq.yaml
+```
+
+2. The second option is to extract the pod definition in YAML format to a file using the command
+
+```bash
+kubectl get pod webapp -o yaml > my-new-pod.yaml
+```
+
+Then make the changes to the exported file using an editor (vi editor). Save the changes
+
+```bash
+vi my-new-pod.yaml
+```
+
+Then delete the existing pod
+
+```bash
+kubectl delete pod webapp
+```
+
+Then create a new pod with the edited file
+
+```bash
+kubectl create -f my-new-pod.yaml
+```
+
+
+```bash
+kubectl edit deployment my-deployment
+```
+
+## **Edit Deployments**
+
+With Deployments you can easily edit any field/property of the POD template. Since the pod template is a child of the deployment specification,  with every change the deployment will automatically delete and create a new pod with the new changes. So if you are asked to edit a property of a POD part of a deployment you may do that simply by running the command
+
+```bash
+kubectl edit deployment my-deployment
+```
+
 
 # **Job**
 
