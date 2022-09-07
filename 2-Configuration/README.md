@@ -38,6 +38,7 @@
   - [**Memory**](#memory)
   - [**Limits**](#limits)
 - [**Taints & Tolerations**](#taints--tolerations)
+  - [**Taint Effect**](#taint-effect)
   - [**Untaint Node**](#untaint-node)
 - [**Node Selectors**](#node-selectors)
   - [**Add label to Node**](#add-label-to-node)
@@ -47,7 +48,7 @@
 - [**Affinity and anti-affinity**](#affinity-and-anti-affinity)
   - [**Node Affinity**](#node-affinity)
     - [**Node affinity weight**](#node-affinity-weight)
-    - [**Taints & Tolerations + Node Affinity**](#taints--tolerations--node-affinity)
+- [**Taints & Tolerations + Node Affinity**](#taints--tolerations--node-affinity)
 
 # **Overide CMD and ENTRYPOINT in Pod Declaration**
 
@@ -458,7 +459,7 @@ securityContext:
 >    A service account named `Default` is automatically created.
 >    Each namespace has its own default service account whenever a part is created.
 
-The concept of service accounts is linked to other security related concepts and coordinates, such as authentication authorization, role based access controls, etc..
+The concept of service accounts is linked to other security related concepts such as authentication, authorization, role based access controls (RBAC), etc..
 
 There are two types of accounts in Kubernetes, an user account and a service account. `User Accounts` are used by users and `Service Accounts` are used by machines.
 
@@ -589,7 +590,7 @@ kind: Pod
 metadata:
   name: myapp
 spec:
-  automountServiceAccountToken: false
+  autoMountServiceAccountToken: false
   containers:
     - name: myapp
       image: myapp
@@ -617,7 +618,7 @@ If the node has no sufficient resources, the scheduler avoids placing the part o
 
 If there is no sufficient resources available on any of the nodes, k8 holds back scheduling the pod. You will see the pod in a `pending` state. If you look at the events, you will see the reason `insufficient <Resource>`.
 
-By default the k8s assumes resurces for containers within pods to require `0.5 CPU and 256 Mi of memory`
+By default the k8s assumes resurces for containers within pods to require `0.5 CPU and 256 Mi of memory` according set `LimitRange` in the `namespace`.
 
 ```yaml
 apiVersion: v1
@@ -737,8 +738,11 @@ spec:
 
 # **Taints & Tolerations**
 
-`kubectl taint nodes <node-name> key=value:taint-effect`
-taint-effect
+```bash
+kubectl taint nodes <node-name> key=value:Taint-Effect
+```
+
+## **Taint-Effect**
 
 - NoSchedule
 - PreferNoSchedule
@@ -976,7 +980,7 @@ If there are two possible nodes that match the `requiredDuringSchedulingIgnoredD
 > 
 > If you want Kubernetes to successfully schedule the Pods in this example, you must have existing nodes with the `kubernetes.io/os=linux` label.
 
-### **Taints & Tolerations + Node Affinity**
+# **Taints & Tolerations + Node Affinity**
 
 `Node Affinity` gives us the ability to attach a certain pod with a certain set of nodes but it does not deter other pods with no affinity set to get attached to the same node. 
 
