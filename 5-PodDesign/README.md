@@ -4,7 +4,9 @@
   - [**Imperitive Commands**](#imperitive-commands)
 - [**Deployments: Rollout & Rollback**](#deployments-rollout--rollback)
   - [**Rollout**](#rollout)
-    - [**Deployment Strategy**](#deployment-strategy)
+    - [**Deployment Strategies**](#deployment-strategies)
+      - [1. **`RollingUpdate` Strategy (Default)**](#1-rollingupdate-strategy-default)
+      - [2. **`Recreate` Strategy**](#2-recreate-strategy)
     - [**Creating a deployment**](#creating-a-deployment)
     - [**Scaling the deployment**](#scaling-the-deployment)
     - [**Get rollout status**](#get-rollout-status)
@@ -170,11 +172,11 @@ kubectl delete po --all
 
 Rollout of Deployment allow update to take place.
 
-### **Deployment Strategy**
+### **Deployment Strategies**
 
 
 
-1. **`RollingUpdate` Strategy (Default)**
+#### 1. **`RollingUpdate` Strategy (Default)**
 
 A rolling deployment is the default deployment strategy in Kubernetes. It replaces the existing version of pods with a new version, updating pods slowly one by one, without cluster downtime. 
 
@@ -223,7 +225,7 @@ spec:
           protocol: TCP
 ```
 
-2. **`Recreate` Strategy**
+#### 2. **`Recreate` Strategy**
 
 This is a basic deployment pattern which simply shuts down all the old pods and replaces them with new ones. You define it by setting the `spec:strategy:type` section of your manifest to `Recreate`
 
@@ -475,7 +477,7 @@ A Job creates one or more Pods and will continue to retry execution of the Pods 
 - Deleting a Job will clean up the Pods it created. 
 - Suspending a Job will delete its active Pods until the Job is resumed again.
 
-A simple case is to create one Job object in order to reliably run one Pod to completion. The Job object will start a new Pod if the first Pod fails or is deleted (for example due to a node hardware failure or a node reboot).
+A simple case is to create one Job object in order to _reliably_ run one Pod to completion. The Job object will start a new Pod if the first Pod fails or is deleted (for example due to a node hardware failure or a node reboot).
 
 We can also use a Job to run multiple Pods in parallel.
 
@@ -491,10 +493,19 @@ kind: Job
 metadata:
   name: math-add-job
 spec:
+  # Specifies the number of retries before considering a Job as failed
+  backoffLimit: 5 # Default 6
+  # Specifies time in seconds before all running Pods of this Job are terminated 
+    # Job status will become Failed with reason: DeadlineExceeded
+  # activeDeadlineSeconds takes precedence over backoffLimit
+  activeDeadlineSeconds: 100
   # Specifies how many pods to create for this job
-  completions: 3
+  completions: 3 # Default 1
+  completionMode: Indexed # Defaut is NonIndexed
   # Specifies how many pods should run in parallel
-  parallelism: 3
+  parallelism: 3 # Default 1 and 0 indicates job is paused
+  # Sprecifies time in seconds to delete the finished Job (either Complete or Failed) cascadingly
+  ttlSecondsAfterFinished: 100
   template:
     # Copy from POD .spec
     spec:
@@ -502,7 +513,7 @@ spec:
         - name: math-add
           image: ubuntu
           command: ["expr", "3", "+", "2"]
-      restartPolicy: OnFailure
+      restartPolicy: Never # Only Never or OnFailure is allowed and Never is advised
 ```
 
 We can get basic job definition file with cli using:
@@ -529,7 +540,7 @@ kubectl logs $pods/<pod-name>
 
 ```
 
-Deleting a job terminates all the pods under it. To delete a job without deleting pods use:
+Deleting a job terminates all the pods under it. To delete a job _without deleting pods_ use:
 ```bash
 kubectl delete jobs/old --cascade=orphan
 ```
@@ -554,9 +565,7 @@ spec:
 ```
 
 
-The `.spec.template` is the only required field of the `.spec`.
-
-The `.spec.template` of Job definition is a [pod](#pod-template) `.spec` section. It has exactly the same schema as a Pod `.spec` section.
+The `.spec.template.spec` of Job definition is a [pod](#pod-template) `.spec` section. It has exactly the same schema as a Pod `.spec` section.
 
 In addition to required fields for a Pod, a pod template in a Job must specify appropriate labels (see [pod selector](#pod-selector)) and an appropriate restart policy.
 
@@ -624,14 +633,23 @@ A container in a Pod may fail for a number of reasons, such as because the proce
 
 An entire Pod can also fail, for a number of reasons, such as when the pod is kicked off by the node (node is upgraded, rebooted, deleted, etc.), or if a container of the Pod fails and the `.spec.template.spec.restartPolicy = "Never"`. When a Pod fails, then the Job controller starts a new Pod. This means that your application needs to handle the case when it is restarted in a new pod. In particular, it needs to handle temporary files, locks, incomplete output and the like caused by previous runs.
 
-Note that even if you specify `.spec.parallelism = 1` and `.spec.completions = 1` and `.spec.template.spec.restartPolicy = "Never"`, the same program may sometimes be started twice.
-
-If you do specify `.spec.parallelism` and `.spec.completions` both greater than 1, then there may be multiple pods running at once. Therefore, your pods must also be tolerant of concurrency.
+> **Note:** 
+> 
+> Even if you specify `.spec.parallelism = 1` and `.spec.completions = 1` and `.spec.template.spec.restartPolicy = "Never"`, the same program may sometimes be started twice.
+>
+> If you do specify `.spec.parallelism` and `.spec.completions` both greater than 1, then there may be multiple pods running at once. Therefore, your pods must also be tolerant of concurrency.
 
 
 ### **Pod backoff failure policy**
 
 There are situations where you want to fail a Job after some amount of retries due to a logical error in configuration etc. To do so, set `.spec.backoffLimit` to specify the number of retries before considering a Job as failed. **_The back-off limit is set by default to 6_**. Failed Pods associated with the Job are recreated by the Job controller with an exponential back-off delay (10s, 20s, 40s ...) capped at six minutes. The back-off count is reset when a Job's Pod is deleted or successful without any other Pods for the Job failing around that time.
+
+The number of retries is calculated in two ways:
+
+- The number of Pods with `.status.phase = "Failed"`.
+- When using `restartPolicy = "OnFailure"`, the number of retries in all the containers of Pods with `.status.phase` equal to `Pending` or `Running`.
+If either of the calculations reaches the .spec.backoffLimit, the Job is considered failed.
+
 
 > **Note:** 
 > 
