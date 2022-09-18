@@ -31,6 +31,10 @@
   - [**Job patterns**](#job-patterns)
 - [**CronJob**](#cronjob)
   - [**Cron schedule syntax**](#cron-schedule-syntax)
+  - [**Starting Deadline**](#starting-deadline)
+  - [**Concurrency Policy**](#concurrency-policy)
+  - [**Suspend**](#suspend)
+  - [**Jobs History Limits**](#jobs-history-limits)
 - [**References**](#references)
 
 # **Labels and Selectors**
@@ -782,6 +786,17 @@ metadata:
   name: hello
 spec:
   schedule: "* * * * *"
+  # Deadline in seconds for starting the job
+  startingDeadlineSeconds: 17
+  # Specifies how to treat concurrent executions of a job
+  # Allow | Forbid | Replace
+  concurrencyPolicy: Allow # (Default)
+  # Sets if subsequent executions are suspended
+  suspend: False # Default
+  # Specifies how many completed jobs should be kept
+  successfulJobsHistoryLimit: 3 # Default
+  # Specifies how failed jobs should be kept
+  failedJobsHistoryLimit: 1 # Default 
   jobTemplate:
     spec:
       template:
@@ -828,6 +843,34 @@ We can get basic cronJob definition file with cli using:
 ```bash
 kubectl create cronjob <cron=job-name> --image <image-name> --schedule "0 0 13 * 5" --dry-run=client -o yaml > cron-job.yaml
 ```
+
+## **Starting Deadline**
+
+The `.spec.startingDeadlineSeconds` field is _optional_. It stands for the deadline in seconds for starting the job if it misses its scheduled time for any reason. After the deadline, the cron job does not start the job. Jobs that do not meet their deadline in this way count as failed jobs. If this field is not specified, the jobs have no deadline.
+
+## **Concurrency Policy**
+
+The `.spec.concurrencyPolicy` field is also optional. It specifies how to treat concurrent executions of a job that is created by this cron job. The spec may specify only one of the following concurrency policies:
+
+- `Allow` (default): The cron job allows concurrently running jobs
+- `Forbid`: The cron job does not allow concurrent runs; if it is time for a new job run and the previous job run hasn't finished yet, the cron job skips the new job run
+- `Replace`: If it is time for a new job run and the previous job run hasn't finished yet, the cron job replaces the currently running job run with a new job run
+
+## **Suspend**
+
+The `.spec.suspend` field is also _optional_. If it is set to `true`, all subsequent executions are suspended. This setting does not apply to already started executions. _*Defaults to false*_.
+
+
+> **Caution:** 
+>
+> Executions that are suspended during their scheduled time count as missed jobs. When `.spec.suspend` changes from true to false on an existing cron job without a starting deadline, the missed jobs are scheduled immediately.
+
+## **Jobs History Limits**
+
+The `.spec.successfulJobsHistoryLimit` and `.spec.failedJobsHistoryLimit` fields are _optional_. These fields specify how many completed and failed jobs should be kept. **By default, they are set to 3 and 1 respectively**.
+
+Setting a limit to 0 corresponds to keeping none of the corresponding kind of jobs after they finish.
+
 
 
 # **References**
