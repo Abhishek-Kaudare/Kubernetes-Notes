@@ -20,6 +20,8 @@ Kubernetes supports many types of volumes. A Pod can use any number of volume ty
 
 When a pod ceases to exist, Kubernetes destroys ephemeral volumes; however, Kubernetes does not destroy persistent volumes. For any kind of volume in a given pod, data is preserved across container restarts.
 
+At its core, a _volume is a directory, possibly with some data in it_, which is accessible to the containers in a pod. How that directory comes to be, the medium that backs it, and the contents of it are determined by the particular volume type used.
+
 To use a volume, specify the volumes to provide for the `Pod` in `.spec.volumes` and declare where to mount those volumes into containers in `.spec.containers[*].volumeMounts`. 
 
 ## **Important Volumes Types**
