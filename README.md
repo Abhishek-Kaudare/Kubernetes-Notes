@@ -111,7 +111,7 @@ kubectl explain po --recursive | grep -A<number of lines> <pattern>
 5. [Kubernetes CKAD Example Exam Questions Practical Challenge Series - Kim Wuestkamp](https://codeburst.io/kubernetes-ckad-weekly-challenges-overview-and-tips-7282b36a2681)
 6. [Practice Exam for Certified Kubernetes Application Developer (CKAD) Certification - Matthew Palmer](https://matthewpalmer.net/kubernetes-app-developer/articles/ckad-practice-exam.html)
 7. [Answers to Five Certified Kubernetes Application Developer CKAD Practice Questions (2021)](https://thospfuller.com/2020/11/09/answers-to-five-kubernetes-ckad-practice-questions-2021/)
-8. [CKAD Self-Study Course - rx-m.com/](https://rx-m.com/ckad-online-training/) 
+8. [CKAD Self-Study Course - rx-m.com](https://rx-m.com/ckad-online-training/) 
 
 ## **Review and Tips** 
 
