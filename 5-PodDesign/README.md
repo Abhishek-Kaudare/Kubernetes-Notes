@@ -190,9 +190,9 @@ To perform a rolling update, simply update the image of your pods using kubectl 
 
 To refine your deployment strategy, change the parameters in the `spec:strategy` section of your manifest file. There are two optional parameters — `maxSurge` and `maxUnavailable`: 
 
-* `MaxSurge`: specifies the maximum number of pods the Deployment is allowed to create at one time. You can specify this as a whole number (e.g. 5), or as a percentage of the total required number of pods (e.g. 10%, always rounded up to the next whole number). If you do not set MaxSurge, the implicit, default value is 25%.
+* `maxSurge`: specifies the maximum number of pods the Deployment is allowed to create at one time. You can specify this as a whole number (e.g. 5), or as a percentage of the total required number of pods (e.g. 10%, always rounded up to the next whole number). If you do not set `maxSurge`, the implicit, default value is 25%.
 
-* `MaxUnavailable`: specifies the maximum number of pods that are allowed to be unavailable during the rollout. Like MaxSurge, you can define it as an absolute number or a percentage. 
+* `maxUnavailable`: specifies the maximum number of pods that are allowed to be unavailable during the rollout. Like `maxSurge`, you can define it as an absolute number or a percentage. If you do not set `maxUnavailable`, the implicit, default value is 25%.
 
 _At least one of these parameters must be larger than zero_. By changing the values of these parameters, you can define other deployment strategies, as shown below.
 
@@ -459,10 +459,6 @@ Then create a new pod with the edited file
 kubectl create -f my-new-pod.yaml
 ```
 
-
-```bash
-kubectl edit deployment my-deployment
-```
 
 ## **Edit Deployments**
 
