@@ -35,6 +35,7 @@
   - [**6. Create a new Deployment using the `deployment-definition-1.yaml` file located at /root/**](#6-create-a-new-deployment-using-the-deployment-definition-1yaml-file-located-at-root)
     - [**Deployment Definition File**](#deployment-definition-file)
   - [**7. Create a new Deployment with the below attributes using your own deployment definition file.**](#7-create-a-new-deployment-with-the-below-attributes-using-your-own-deployment-definition-file)
+  - [**8. Get pods for deployment named "httpd-frontend"**](#8-get-pods-for-deployment-named-httpd-frontend)
 - [**Namespaces**](#namespaces)
   - [**Kuberenetes and Namespace**](#kuberenetes-and-namespace)
     - [**When to Use Multiple Namespaces**](#when-to-use-multiple-namespaces)
@@ -335,6 +336,10 @@ kubectl scale deployment --replicas=4 httpd-frontend
 kubectl get deploy
 ```
 
+## **8. Get pods for deployment named "httpd-frontend"**
+```bash
+k get po -l app=httpd-frontend
+```
 
 # **Namespaces**
 
