@@ -4,8 +4,23 @@
   - [**Container states**](#container-states)
   - [**Container restart policy**](#container-restart-policy)
   - [**Pod Conditions**](#pod-conditions)
-- [**Readiness Probe**](#readiness-probe)
-- [**Liveness Probe**](#liveness-probe)
+- [**Debug in Kubernetes**](#debug-in-kubernetes)
+  - [**Debugging with an ephemeral debug container**](#debugging-with-an-ephemeral-debug-container)
+  - [**Debugging using a copy of the Pod**](#debugging-using-a-copy-of-the-pod)
+    - [**Copying a Pod while adding a new container**](#copying-a-pod-while-adding-a-new-container)
+  - [**Copying a Pod while changing its command**](#copying-a-pod-while-changing-its-command)
+  - [**Copying a Pod while changing container images**](#copying-a-pod-while-changing-container-images)
+- [**Probes**](#probes)
+  - [**Configure Probes**](#configure-probes)
+  - [**Check mechanisms**](#check-mechanisms)
+    - [**`exec` Probes**](#exec-probes)
+    - [**`grpc` Probes**](#grpc-probes)
+    - [**`httpGet` Probe**](#httpget-probe)
+    - [**`tcpSocket` Probes**](#tcpsocket-probes)
+  - [**Types of Probe**](#types-of-probe)
+    - [**`livenessProbe`**](#livenessprobe)
+    - [**`startupProbe`**](#startupprobe)
+    - [**`readinessProbe`**](#readinessprobe)
 - [**Logging in K8**](#logging-in-k8)
 - [**Monitoring in K8**](#monitoring-in-k8)
   - [**Enabling Metrics Server**](#enabling-metrics-server)
@@ -14,7 +29,7 @@
 
 # **Pod Lifecycle**
 
-This page describes the lifecycle of a Pod. Pods follow a defined lifecycle, starting in the `Pending` [phase](https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#pod-phase), moving through `Running` if at least one of its primary containers starts OK, and then through either the `Succeeded` or `Failed` phases depending on whether any container in the Pod terminated in failure.
+Pods follow a defined lifecycle, starting in the `Pending` [phase](https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#pod-phase), moving through `Running` if at least one of its primary containers starts OK, and then through either the `Succeeded` or `Failed` phases depending on whether any container in the Pod terminated in failure.
 
 Whilst a Pod is running, the kubelet is able to restart containers to handle some kind of faults. Within a Pod, Kubernetes tracks different container [states](https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#container-states) and determines what action to take to make the Pod healthy again.
 
@@ -46,7 +61,7 @@ The phase of a Pod is a simple, high-level summary of where the Pod is in its li
 
 The number and meanings of Pod phase values are tightly guarded. Other than what is documented here, nothing should be assumed about Pods that have a given `phase` value.
 
-- A POD has a *pod status* and *pod conditions*. The POD status tells us where the POD is in its lifecycle.
+- A POD has a _*pod status*_ and _*pod conditions*_. The POD status tells us where the POD is in its lifecycle.
   
 - When a POD is first created it is in a `Pending` state. This is when the scheduler tries to figure out where to place the POD.
   
@@ -75,7 +90,7 @@ If a node dies or is disconnected from the rest of the cluster, Kubernetes appli
 
 ## **Container states**
 
-As well as the [phase](https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#pod-phase) of the Pod overall, Kubernetes tracks the state of each container inside a Pod. You can use [container lifecycle hooks](https://kubernetes.io/docs/concepts/containers/container-lifecycle-hooks/) to trigger events to run at certain points in a container's lifecycle.
+As well as the [phase](https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#pod-phase) of the Pod overall, Kubernetes tracks the state of each container inside a Pod.
 
 Once the [scheduler](https://kubernetes.io/docs/reference/command-line-tools-reference/kube-scheduler/) assigns a Pod to a Node, the kubelet starts creating containers for that Pod using a [container runtime](https://kubernetes.io/docs/setup/production-environment/container-runtimes). There are three possible container states: `Waiting`, `Running`, and `Terminated`.
 
@@ -87,15 +102,22 @@ Each state has a specific meaning:
 | :---: | :---: |
 | **`Waiting`** | If a container is not in either the `Running` or `Terminated` state, it is `Waiting`. A container in the `Waiting` state is still running the operations it requires in order to complete start up: for example, pulling the container image from a container image registry, or applying [Secret](https://kubernetes.io/docs/concepts/configuration/secret/) data. When you use `kubectl` to query a Pod with a container that is `Waiting`, you also see a Reason field to summarize why the container is in that state. |
 
-| **`Running`** | The `Running` status indicates that a container is executing without issues. If there was a `postStart` hook configured, it has already executed and finished. When you use `kubectl` to query a Pod with a container that is `Running`, you also see information about when the container entered the `Running` state. |
+| **`Running`** | The `Running` status indicates that a container is executing without issues. When you use `kubectl` to query a Pod with a container that is `Running`, you also see information about when the container entered the `Running` state. |
 
 | **`Terminated`** | A container in the `Terminated` state began execution and then either ran to completion or failed for some reason. When you use `kubectl` to query a Pod with a container that is `Terminated`, you see a reason, an exit code, and the start and finish time for that container's period of execution. |
 
-If a container has a `preStop` hook configured, this hook runs before the container enters the `Terminated` state.
+You can use [container lifecycle hooks](https://kubernetes.io/docs/concepts/containers/container-lifecycle-hooks/) to trigger events to run at certain points in a container's lifecycle.
+- If there was a `postStart` hook configured, it has already executed and finished.
+- If a container has a `preStop` hook configured, this hook runs before the container enters the `Terminated` state.
 
 ## **Container restart policy**
 
-The `spec` of a Pod has a `restartPolicy` field with possible values Always, OnFailure, and Never. The default value is Always.
+The `spec` of a Pod has a `restartPolicy` field with possible values:
+- Always
+- OnFailure
+- Never
+ 
+The default value is Always.
 
 The `restartPolicy` applies to all containers in the Pod. `restartPolicy` only refers to restarts of the containers by the kubelet on the same node. After containers in a Pod exit, the kubelet restarts them with an exponential back-off delay (10s, 20s, 40s, …), that is capped at five minutes. Once a container has executed for 10 minutes without any problems, the kubelet resets the restart backoff timer for that container.
 
@@ -118,49 +140,127 @@ A Pod has a PodStatus, which has an array of PodConditions through which the Pod
 | reason |	Machine-readable, UpperCamelCase text indicating the reason for the condition's last transition. |
 | message |	Human-readable message indicating details about the last status transition. |
 
-# **Readiness Probe**
 
-```yaml
-apiVersion: v1
-kind: Pod
-metadata:
-  name: simple-webapp
-  labels:
-    name: simple-webapp
-spec:
-  containers:
-    - name: simple-webapp
-      image: simple-webapp
-      resources:
-        limits:
-          memory: "128Mi"
-          cpu: "500m"
-      ports:
-        - containerPort: 8080
-      # HTTP Readiness Probe
-      readinessProbe:
-        httpGet:
-          path: /api/ready
-          port: 8080
-        initialDelaySeconds: 10 # Delay before starting readiness probe
-        periodSeconds: 5 # How often to probe?
-        failureThreshold: 8 # Consecutive failures to be considered failed
+# **Debug in Kubernetes**
 
-      # TCP Readiness Probe
-      # readinessProbe:
-      #   tcpSocket:
-      #     port: 3306
+If the container image includes debugging utilities:
 
-      # Exec command
-      # readinessProbe:
-      #   exec:
-      #     command:
-      #       - cat
-      #       - /app/is_ready
+```bash
+kubectl exec ${POD_NAME} -c ${CONTAINER_NAME} -- ${CMD} ${ARG1} ${ARG2} ... ${ARGN}
+```
+## **Debugging with an ephemeral debug container**
+`kubectl exec` is insufficient because a container has crashed or a container image doesn't include debugging utilities
 
+```bash
+kubectl debug -it ${TARGET_POD_NAME} --image=${NEW_IMAGE} --target=${TARGET_CONTAINER_NAMESPACE}
 ```
 
-# **Liveness Probe**
+This command adds a new busybox container and attaches to it. The `--target` parameter targets the process namespace of another container. It's necessary here because `kubectl run` does not enable process namespace sharing in the pod it creates.
+
+## **Debugging using a copy of the Pod**
+
+We can't run `kubectl exec` to troubleshoot your container if your container image does not include a shell or if your application crashes on startup. In these situations you can use `kubectl debug` to create a copy of the Pod with configuration values changed to aid debugging.
+
+### **Copying a Pod while adding a new container**
+
+Run this command to create a copy of TARGET_POD named COPY_POD that adds a new NEW_CONTAINER_IMAGE (Ubuntu) container for debugging:
+
+```bash
+kubectl debug ${TARGET_POD_NAME} -it --image=${NEW_CONTAINER_IMAGE} --share-processes --copy-to=${COPY_POD_NAME}
+```
+
+> **Note**:
+> 
+> - `kubectl debug` automatically generates a container name if you don't choose one using the `--container` flag.
+> - The `-i` flag causes `kubectl debug` to attach to the new container by default. You can prevent this by specifying `--attach=false`. If your session becomes disconnected you can reattach using `kubectl attach`.
+> - The `--share-processes` allows the containers in this Pod to see processes from the other containers in the Pod.
+
+## **Copying a Pod while changing its command**
+
+Run kubectl debug to create a copy of this Pod with the command changed to an interactive shell:
+
+```bash
+kubectl debug ${TARGET_POD_NAME} -it --copy-to=${COPY_POD_NAME} --container=${TARGET_CONTAINER_NAME} -- sh #${NEW_COMMAND}
+```
+
+> **Note**:
+> To change the command of a specific container you must specify its name using `--container` or `kubectl debug` will instead create a new container to run the command you specified.
+> The `-i` flag causes `kubectl debug` to attach to the container by default. You can prevent this by specifying `--attach=false`. If your session becomes disconnected you can reattach using `kubectl attach`.
+
+## **Copying a Pod while changing container images**
+
+Use kubectl debug to make a copy and change its container image to ubuntu:
+
+```bash
+kubectl debug ${TARGET_POD_NAME} --copy-to=${COPY_POD_NAME} --set-image=*=ubuntu
+```
+The syntax of `--set-image` uses the same container_name=image syntax as kubectl set image. `*=ubuntu` means change the image of all containers to ubuntu.
+
+# **Probes**
+
+A probe is a diagnostic performed periodically by the kubelet on a container. To perform a diagnostic, the `kubelet` either executes code within the container, or makes a network request.
+
+## **Configure Probes**
+
+Probes have a number of fields that you can use to more precisely control the behavior of liveness and readiness checks:
+
+- `initialDelaySeconds`: Number of seconds after the container has started before liveness or readiness probes are initiated. Defaults to 0 seconds. Minimum value is 0.
+- `periodSeconds`: How often (in seconds) to perform the probe. Default to 10 seconds. Minimum value is 1.
+- `timeoutSeconds`: Number of seconds after which the probe times out. Defaults to 1 second. Minimum value is 1.
+- `successThreshold`: Minimum consecutive successes for the probe to be considered successful after having failed. Defaults to 1. Must be 1 for liveness and startup Probes. Minimum value is 1.
+- `failureThreshold`: When a probe fails, Kubernetes will try `failureThreshold` times before giving up. Giving up in case of liveness probe means restarting the container. In case of readiness probe the Pod will be marked Unready. Defaults to 3. Minimum value is 1.
+
+## **Check mechanisms**
+There are four different ways to check a container using a probe. Each probe must define exactly one of these four mechanisms:
+### **`exec` Probes**
+
+Executes a specified command inside the container. The diagnostic is considered successful if the command exits with a status code of 0.
+
+| Field	| Description |
+| - | - |
+| `command` (string array) | Command is the command line to execute inside the container, the working directory for the command is root ('/') in the container's filesystem. The command is simply exec'd, it is not run inside a shell, so traditional shell instructions ('\|', etc) won't work. To use a shell, you need to explicitly call out to that shell. Exit status of 0 is treated as live/healthy and non-zero is unhealthy. |
+
+### **`grpc` Probes**
+
+Performs a remote procedure call using gRPC. The target should implement gRPC health checks. The diagnostic is considered successful if the `status` of the response is `SERVING`.
+gRPC probes are an alpha feature and are only available if you enable the `GRPCContainerProbe` feature gate.
+
+| Field	| Description |
+| - | - |
+| `service` (string) | Service is the name of the service to place in the gRPC [HealthCheckRequest](https://github.com/grpc/grpc/blob/master/doc/health-checking.md). If this is not specified, the default behavior is defined by gRPC. |
+| `port` (integer) | Port number of the gRPC service. Number must be in the range 1 to 65535. |
+
+
+### **`httpGet` Probe**
+
+Performs an HTTP GET request against the Pod's IP address on a specified port and path. The diagnostic is considered successful if the response has a status code greater than or equal to 200 and less than 400.
+
+| Field	| Description |
+| - | - |
+| `host` (string) | Host name to connect to, defaults to the pod IP. You probably want to set "Host" in httpHeaders instead. |
+| `httpHeaders` (HTTPHeader array) | Custom headers to set in the request. HTTP allows repeated headers. |
+| `path` (string) | Path to access on the HTTP server. |
+| `port` | Name or number of the port to access on the container. Number must be in the range 1 to 65535. Name must be an IANA_SVC_NAME. |
+| `scheme` (string) | Scheme to use for connecting to the host. Defaults to HTTP. |
+
+### **`tcpSocket` Probes**
+
+Performs a TCP check against the Pod's IP address on a specified port. The diagnostic is considered successful if the port is open. If the remote system (the container) closes the connection immediately after it opens, this counts as healthy.
+
+| Field	| Description |
+| - | - |
+| `host` (string) | Optional: Host name to connect to, defaults to the pod IP. |
+| `port` | Name or number of the port to access on the container. Number must be in the range 1 to 65535. Name must be an IANA_SVC_NAME. |
+
+	
+## **Types of Probe**
+
+### **`livenessProbe`**
+
+Indicates whether the container is running. If the liveness probe fails, the kubelet kills the container, and the container is subjected to its restart policy. If a container does not provide a liveness probe, the default state is `Success`.
+
+Many applications running for long periods of time eventually transition to broken states, and cannot recover except by being restarted. Kubernetes provides liveness probes to detect and remedy such situations.
+
 
 ```yaml
 apiVersion: v1
@@ -184,6 +284,9 @@ spec:
         httpGet:
           path: /api/ready
           port: 8080
+          httpHeaders:
+          - name: Custom-Header
+            value: Awesome
         initialDelaySeconds: 10 # Delay before starting Liveness probe
         periodSeconds: 5 # How often to probe?
         failureThreshold: 8 # Consecutive failures to be considered failed
@@ -200,7 +303,124 @@ spec:
       #       - cat
       #       - /app/is_ready
 
+      # livenessProbe:
+        # grpc:
+        #   port: 2379
+
 ```
+
+### **`startupProbe`**
+
+Indicates whether the application within the container is started. _All other probes are disabled if a startup probe is provided, until it succeeds_. If the startup probe fails, the kubelet kills the container, and the container is subjected to its restart policy. If a container does not provide a startup probe, the default state is `Success`.
+
+> **Note**: Protect slow starting containers with startup probes.
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: simple-webapp
+  labels:
+    name: simple-webapp
+spec:
+  containers:
+    - name: simple-webapp
+      image: simple-webapp
+      resources:
+        limits:
+          memory: "128Mi"
+          cpu: "500m"
+      ports:
+        - containerPort: 8080
+      # HTTP startup Probe
+      startupProbe:
+        httpGet:
+          path: /healthz
+          port: liveness-port
+  
+          httpHeaders:
+          - name: Custom-Header
+            value: Awesome
+        initialDelaySeconds: 10 # Delay before starting Liveness probe
+        periodSeconds: 10 # How often to probe?
+        failureThreshold: 30 # Consecutive failures to be considered failed
+
+      # TCP startup Probe
+      # startupProbe:
+      #   tcpSocket:
+      #     port: 3306
+
+      # Exec command
+      # startupProbe:
+      #   exec:
+      #     command:
+      #       - cat
+      #       - /app/is_ready
+
+      # startupProbe:
+        # grpc:
+        #   port: 2379
+
+```
+
+### **`readinessProbe`**
+
+Indicates whether the container is ready to respond to requests. If the readiness probe fails, the endpoints controller removes the Pod's IP address from the endpoints of all Services that match the Pod. The default state of readiness before the initial delay is `Failure`. If a container does not provide a readiness probe, the default state is `Success`.
+
+Sometimes, applications are temporarily unable to serve traffic. For example, an application might need to load large data or configuration files during startup, or depend on external services after startup. In such cases, you don't want to kill the application, but you don't want to send it requests either. Kubernetes provides readiness probes to detect and mitigate these situations. A pod with containers reporting that they are not ready does not receive traffic through Kubernetes Services.
+
+> 📝 **Note:** 
+> 
+> Readiness probes runs on the container during its whole lifecycle.
+
+> ⚠️ **Caution:** 
+> 
+> Liveness probes do not wait for readiness probes to succeed. If you want to wait before executing a liveness probe you should use `initialDelaySeconds` or a `startupProbe`.
+> 
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: simple-webapp
+  labels:
+    name: simple-webapp
+spec:
+  containers:
+    - name: simple-webapp
+      image: simple-webapp
+      resources:
+        limits:
+          memory: "128Mi"
+          cpu: "500m"
+      ports:
+        - containerPort: 8080
+      # HTTP Readiness Probe
+      readinessProbe:
+        httpGet:
+          path: /api/ready
+          port: 8080
+          httpHeaders:
+          - name: Custom-Header
+            value: Awesome
+        initialDelaySeconds: 10 # Delay before starting readiness probe
+        periodSeconds: 5 # How often to probe?
+        failureThreshold: 8 # Consecutive failures to be considered failed
+
+      # TCP Readiness Probe
+      # readinessProbe:
+      #   tcpSocket:
+      #     port: 3306
+
+      # Exec command
+      # readinessProbe:
+      #   exec:
+      #     command:
+      #       - cat
+      #       - /app/is_ready
+
+```
+
 # **Logging in K8**
 
 To check the logs run following commands:
