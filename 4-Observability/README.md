@@ -126,10 +126,10 @@ The `restartPolicy` applies to all containers in the Pod. `restartPolicy` on
 
 A Pod has a PodStatus, which has an array of PodConditions through which the Pod has or has not passed:
 
-`PodScheduled`: the Pod has been scheduled to a node.
-`ContainersReady`: all containers in the Pod are ready.
-`Initialized`: all init containers have completed successfully.
-`Ready`: the Pod is able to serve requests and should be added to the load balancing pools of all matching Services.
+- `PodScheduled`: the Pod has been scheduled to a node.
+- `ContainersReady`: all containers in the Pod are ready.
+- `Initialized`: all init containers have completed successfully.
+- `Ready`: the Pod is able to serve requests and should be added to the load balancing pools of all matching Services.
 
 | Field name | Description |
 | :---: | :---: |

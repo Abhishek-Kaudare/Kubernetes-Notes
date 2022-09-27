@@ -12,12 +12,12 @@ curl -LO https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable
 ### **Change permissions to move it to the binaries**
 ```
 chmod +x kubectl-convert
-mv kubectl-convert /usr/locl/bin/kubectl-convert
+mv kubectl-convert /usr/local/bin/kubectl-convert
 ```
 
 ### **Check if successful**
 ```
-kubectl --version
+kubectl-convert --version
 ```
 
 ### **Use it to change output version of an ingress file**
@@ -32,7 +32,7 @@ kubectl get ing ingress-space -o yaml | grep apiVersion
 ```
 
 ## **Upgrade the ApiGroup of YAML to new version**
-With help of the kubectl convert command, change the deprecated API version to the `apiGroup new version`.
+With help of the kubectl convert command, change the deprecated API version to the `apiGroup/newVersion`.
 
 Example:
 ```bash
