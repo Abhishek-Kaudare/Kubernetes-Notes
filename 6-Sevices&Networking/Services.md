@@ -1,10 +1,17 @@
 - [**Service**](#service)
   - [**NodePort**](#nodeport)
   - [**ClusterIp**](#clusterip)
-    - [**Create a Service named redis-service of type ClusterIP to expose pod redis on port 6379**](#create-a-service-named-redis-service-of-type-clusterip-to-expose-pod-redis-on-port-6379)
+    - [**Examples**](#examples)
 - [**References**](#references)
 
 # **Service**
+
+Service is an abstraction which defines 
+- a logical set of Pods and a policy by which to access them
+- Pods targeted by a Service is usually determined by a selector
+
+![Service Ports](service.drawio.png "All ports in service.")
+ 
 ```bash
 kubectl expose  (-f FILENAME | TYPE NAME) [--port=port] [--protocol=TCP|UDP] [--target-port=number-or-name] [--name=name] [--external-ip=external-ip-of-service] [--type=type]
 
@@ -17,11 +24,11 @@ kind: Service
 metadata:
   name: myapp-service
 spec:
-  type: NodePort
+  type: NodePort # Default: ClusterIp | More Options: LoadBalancer, ExternalName 
   ports:
     - port: 80 # Required
-      targetPort: 80
-      nodePort: 30008
+      targetPort: 8080
+      nodePort: 30008 # Range 30000-32767
   selector:
     app: myapp
     type: frontend

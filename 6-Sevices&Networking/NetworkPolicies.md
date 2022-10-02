@@ -1,3 +1,9 @@
+Ingress: Traffic coming in
+
+Egress: Traffic going out
+
+(Responses doesn't matter)
+
 ```yaml
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
@@ -51,3 +57,4 @@ spec:
       - port: 53
         protocol: TCP
 ```
+
