@@ -349,6 +349,9 @@ Claims can specify a label selector to _further filter the set of volumes_. Only
 
     PVCs don't necessarily have to request a class. A PVC with its `storageClassName` set equal to `""` is always interpreted to be requesting a PV with no class, so it can only be bound to PVs with no class (no annotation or one set equal to `""`). A PVC with no `storageClassName` is not quite the same and is treated differently by the cluster, depending on whether the DefaultStorageClass admission plugin is turned on.
 
+> **Note on PV-PVC relation**
+> Once a PV is bound to a PVC, that PV is essentially tied to the PVC's project and cannot be bound to by another PVC. There is a one-to-one mapping of PVs and PVCs. However, multiple pods in the same project can use the same PVC.
+
 ### **A Note on Namespaces**
 `PersistentVolumes` binds are exclusive, and since `PersistentVolumeClaims` are namespaced objects, mounting claims with "Many" modes (ROX, RWX) is only possible within one namespace.
 

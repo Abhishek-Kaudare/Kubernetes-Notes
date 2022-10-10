@@ -38,7 +38,7 @@
   - [**Memory**](#memory)
   - [**Limits**](#limits)
 - [**Taints & Tolerations**](#taints--tolerations)
-  - [**Taint Effect**](#taint-effect)
+  - [**Taint-Effect**](#taint-effect)
   - [**Untaint Node**](#untaint-node)
 - [**Node Selectors**](#node-selectors)
   - [**Add label to Node**](#add-label-to-node)
@@ -373,7 +373,7 @@ As you know already in Kubernetes, _containers are encapsulated in pods._
   spec:
   # Adds security context for the pod
   securityContext:
-    runAsUser: 1000
+    runAsUser: 0 # 0 is rootUSer
   containers:
     - name: ubuntu
       image: ubuntu
