@@ -3,6 +3,7 @@
 - [Basic Setup](#basic-setup)
   - [Vim Setup](#vim-setup)
     - [Persist Vim settings in .vimrc](#persist-vim-settings-in-vimrc)
+    - [Set Folder Structure For Questions](#set-folder-structure-for-questions)
   - [YAML Manifests](#yaml-manifests)
   - [Environment Setup](#environment-setup)
 - [Pods](#pods)
@@ -42,13 +43,16 @@ vim ~/.vimrc
 Now enter (in insert-mode activated with `i`) the following lines:
 
 ```bash
-set expandtab
-set tabstop=2
-set shiftwidth=2
+cat >> ~/.vimrc << EOF
+set ts=2 sts=2 sw=2 et ai cuc cul
+EOF
 ```
 Save and close the file by pressing Esc followed by `:x` and `Enter`.
 
-
+### Set Folder Structure For Questions
+```bash
+mkdir `seq 20`
+```
 ## YAML Manifests
 
 All k8s definition files have four required sections:
