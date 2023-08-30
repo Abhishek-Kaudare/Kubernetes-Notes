@@ -37,7 +37,7 @@
   - [**CPU**](#cpu)
   - [**Memory**](#memory)
   - [**Limits**](#limits)
-- [**Taints & Tolerations**](#taints--tolerations)
+- [**Taints \& Tolerations**](#taints--tolerations)
   - [**Taint-Effect**](#taint-effect)
   - [**Untaint Node**](#untaint-node)
 - [**Node Selectors**](#node-selectors)
@@ -48,7 +48,7 @@
 - [**Affinity and anti-affinity**](#affinity-and-anti-affinity)
   - [**Node Affinity**](#node-affinity)
     - [**Node affinity weight**](#node-affinity-weight)
-- [**Taints & Tolerations + Node Affinity**](#taints--tolerations--node-affinity)
+- [**Taints \& Tolerations + Node Affinity**](#taints--tolerations--node-affinity)
 
 # **Overide CMD and ENTRYPOINT in Pod Declaration**
 
@@ -281,10 +281,10 @@ spec:
       image: ubuntu
       env:
       - name: <Env Name> # DB_Host
-          valueFrom:
-            secretKeyRef:   
-              name: <Secret Name>  # app-secret
-              key: <Key Name>  # DB_Host
+        valueFrom:
+          secretKeyRef:   
+            name: <Secret Name>  # app-secret
+            key: <Key Name>  # DB_Host
 ```
 
 ### **Using Secret from volumes**
