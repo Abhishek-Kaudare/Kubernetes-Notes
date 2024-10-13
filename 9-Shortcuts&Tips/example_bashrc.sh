@@ -1,0 +1,20 @@
+#! /bin/bash
+
+alias k='kubectl'
+alias kg='kubectl g'
+alias ke='kubectl edit'
+alias kd='kubectl describe'
+alias kdd='kubectl delete'
+alias kr='kubectl run'
+alias kgp='kubectl get pods'
+alias kgd='kubectl get deployments'
+alias kns='kubens'
+alias kcx='kubectx'
+alias wkgp='watch kubectl get pod'
+alias kcx='kubectx'
+alias kcx='kubectx'
+alias ktmpsh='kubectl run busybox -it --rm --image=busybox -- sh'
+alias ktmp='kubectl run busybox -it --rm --image=busybox -- '
+
+export dry='--dry-run=client'
+export now='--force --grace-period 0'
