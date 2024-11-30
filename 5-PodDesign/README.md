@@ -61,7 +61,7 @@ spec:
     spec:
       containers:
       - name: busybox-container
-        image: busybox888
+        image: busybox
         command:
         - sh
         - "-c"
@@ -69,7 +69,7 @@ spec:
 ```
 Imperitive command
 ```bash
-kubectl run pod nginx --image=nginx -l="key1=val2,key2=val2"
+kubectl run nginx --image=nginx -l="key1=val2,key2=val2"
 ```
 2. Get labels for all objects
 ```bash
@@ -104,17 +104,17 @@ kubectl get pods --show-labels
 
 Remove label with key 'env' and pods named nginx1, nginx2 and nginx3
 ```bash
-kubectl label pod nginx(1..3} env-
+kubectl label pod nginx{1..3} env-
 ``` 
 
 Change value of label with key-value 'env=prod' and pods named nginx1, nginx2 and nginx3
 ```bash
-kubectl label pod nginx(1..3} env=dev --overwrite
+kubectl label pod nginx{1..3} env=dev --overwrite
 ``` 
 
 Add label with key-value 'feature=frontend' and pods named nginx1, nginx2 and nginx3
 ```bash
-kubectl label pod nginx(1..3} feature=frontend 
+kubectl label pod nginx{1..3} feature=frontend 
 ```
 
 4. Get count of selected
@@ -402,6 +402,9 @@ Pod Template: Labels:    app=<app-name>
 kubectl rollout undo deployment/<deployment-name>
 ```
 
+```bash
+kubectl rollout undo deployment/<deployment-name> --to-revision=1
+```
 # **A quick note on editing PODs and Deployments**
 
 ## **Edit a POD**
